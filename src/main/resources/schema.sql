@@ -1,0 +1,24 @@
+DROP TABLE IF EXISTS Order_Items;
+DROP TABLE IF EXISTS Orders;
+
+CREATE TABLE Orders (
+  Order_Id BIGINT NOT NULL AUTO_INCREMENT,
+  User_Id BIGINT NOT NULL,
+  Status VARCHAR(50) NOT NULL,
+  Created_At DATETIME NOT NULL,
+  PRIMARY KEY (Order_Id)
+);
+
+CREATE TABLE Order_Items (
+  Order_Item_Id BIGINT NOT NULL AUTO_INCREMENT,
+  Product_Id BIGINT NOT NULL,
+  Quantity INT NOT NULL,
+  Price DOUBLE NOT NULL,
+  Order_Id BIGINT NOT NULL,
+  PRIMARY KEY (Order_Item_Id),
+
+  CONSTRAINT fk_order_items_order
+    FOREIGN KEY (Order_Id)
+    REFERENCES Orders (Order_Id)
+    ON DELETE CASCADE
+);
