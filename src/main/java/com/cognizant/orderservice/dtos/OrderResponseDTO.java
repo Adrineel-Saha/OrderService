@@ -1,25 +1,14 @@
 package com.cognizant.orderservice.dtos;
 
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Positive;
-
 import java.time.LocalDateTime;
 
-public class OrderDTO {
+public class OrderResponseDTO {
     private Long id;
-
-    @NotNull(message = "User_Id is required")
-    @Positive(message = "User_Id must be a positive number")
     private Long userId;
-
-    @Pattern(
-            regexp = "CREATED|PAID|SHIPPED|CANCELLED",
-            message = "Status must be one of: CREATED, PAID, SHIPPED, CANCELLED"
-    )
     private String status;
-
     private LocalDateTime createdAt;
+    private String userName;
+    private String email;
 
     public Long getId() {
         return id;
@@ -51,5 +40,21 @@ public class OrderDTO {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

@@ -1,24 +1,14 @@
 package com.cognizant.orderservice.dtos;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
-
-public class OrderItemDTO {
+public class OrderItemResponseDTO {
     private Long id;
-
-    @NotNull(message = "Product_Id is required")
-    @Positive(message = "Product_Id must be a positive number")
     private Long productId;
-
-    @NotNull(message = "Quantity is required")
-    @Min(value = 1, message = "Quantity must be at least 1")
     private int quantity;
-
-    @Positive(message="Price should be positive")
     private double price;
-
     private Long orderId;
+    private String name;
+    private String description;
+    private int stock;
 
     public Long getId() {
         return id;
@@ -58,5 +48,29 @@ public class OrderItemDTO {
 
     public void setOrderId(Long orderId) {
         this.orderId = orderId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public int getStock() {
+        return stock;
+    }
+
+    public void setStock(int stock) {
+        this.stock = stock;
     }
 }
