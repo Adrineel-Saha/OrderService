@@ -5,7 +5,6 @@ import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.entities.OrderItem;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.ProductFeignClient;
-import com.cognizant.orderservice.feignclients.UserFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import org.modelmapper.ModelMapper;
