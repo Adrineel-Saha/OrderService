@@ -1,6 +1,7 @@
 package com.cognizant.orderservice.globalexceptionhandler;
 
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
+import feign.FeignException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,6 +27,18 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining(", "));
 
         ResponseEntity<String> errorResponse = new ResponseEntity<String>(allMessages, HttpStatus.BAD_REQUEST);
+        return errorResponse;
+    }
+
+    @ExceptionHandler(FeignException.NotFound.class)
+    public ResponseEntity<String> handleFeignNotFound(FeignException ex) {
+        String msg = ex.getMessage();
+
+        int lastBracket = msg.lastIndexOf('[');
+        int endBracket = msg.lastIndexOf(']');
+        String cleanMessage = msg.substring(lastBracket + 1, endBracket);
+
+        ResponseEntity<String> errorResponse = new ResponseEntity<String>(cleanMessage, HttpStatus.NOT_FOUND);
         return errorResponse;
     }
 

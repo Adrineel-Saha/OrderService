@@ -8,6 +8,8 @@ import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.UserFeignClient;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -24,12 +26,12 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     private ModelMapper modelMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
     @Override
     public OrderResponseDTO createOrder(OrderDTO orderDTO) {
         Long userId=orderDTO.getUserId();
-        UserDTO userDTO=userFeignClient.getUser(userId).orElseThrow(
-                ()->new ResourceNotFoundException("User not found with Id: "+ userId)
-        );
+        UserDTO userDTO=userFeignClient.getUser(userId);
 
         Order order=modelMapper.map(orderDTO,Order.class);
         order.setCreatedAt(LocalDateTime.now());
@@ -47,9 +49,7 @@ public class OrderServiceImpl implements OrderService{
                 ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
         );
         Long userId=order.getUserId();
-        UserDTO userDTO=userFeignClient.getUser(userId).orElseThrow(
-                ()->new ResourceNotFoundException("User not found with Id: "+ userId)
-        );
+        UserDTO userDTO=userFeignClient.getUser(userId);
 
         OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
         modelMapper.map(userDTO,orderResponseDTO);
@@ -62,9 +62,7 @@ public class OrderServiceImpl implements OrderService{
         List<OrderResponseDTO> orderResponseDTOList=orderList.stream().
                 map(order->{
                     Long userId=order.getUserId();
-                    UserDTO userDTO=userFeignClient.getUser(userId).orElseThrow(
-                            ()->new ResourceNotFoundException("User not found with Id: "+ userId)
-                    );
+                    UserDTO userDTO=userFeignClient.getUser(userId);
                     OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
                     modelMapper.map(userDTO,orderResponseDTO);
                     return orderResponseDTO;
@@ -79,20 +77,20 @@ public class OrderServiceImpl implements OrderService{
 
     @Override
     public List<OrderResponseDTO> listOrdersByUser(Long userId) {
-        List<Order> orderList = orderRepository.findByUserId(userId);
-        if (orderList.isEmpty()) {
-            throw new RuntimeException("No Orders Found with User_Id: " + userId);
-        }
+        UserDTO userDTO = userFeignClient.getUser(userId);
 
-        UserDTO userDTO = userFeignClient.getUser(userId).orElseThrow(
-                () -> new ResourceNotFoundException("User not found with Id: " + userId)
-        );
+        List<Order> orderList = orderRepository.findByUserId(userId);
+
         List<OrderResponseDTO> orderResponseDTOList = orderList.stream().
                 map(order -> {
                     OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
                     modelMapper.map(userDTO, orderResponseDTO);
                     return orderResponseDTO;
                 }).toList();
+
+        if(orderResponseDTOList.isEmpty()){
+            throw new RuntimeException("Order List is Empty");
+        }
 
         return orderResponseDTOList;
     }
@@ -107,9 +105,7 @@ public class OrderServiceImpl implements OrderService{
         Order savedOrder=orderRepository.save(order);
 
         Long userId=savedOrder.getUserId();
-        UserDTO userDTO=userFeignClient.getUser(userId).orElseThrow(
-                ()->new ResourceNotFoundException("User not found with Id: "+ userId)
-        );
+        UserDTO userDTO=userFeignClient.getUser(userId);
 
         OrderResponseDTO orderResponseDTO=modelMapper.map(savedOrder, OrderResponseDTO.class);
         modelMapper.map(userDTO,orderResponseDTO);
@@ -122,7 +118,7 @@ public class OrderServiceImpl implements OrderService{
                 ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
         );
 
-//        log.info("Deleted Product: " + product);
+        log.info("Deleted Order: " + order);
 
         orderRepository.delete(order);
         return "Order deleted with Id: " + orderId;

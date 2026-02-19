@@ -1,5 +1,6 @@
 package com.cognizant.orderservice.dtos;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,7 @@ public class OrderResponseDTO {
     @Schema(
             description="Order Created At"
     )
+    @JsonFormat(pattern = "dd-MM-yyyy HH:mm:ss")
     private LocalDateTime createdAt;
 
     @Schema(
@@ -84,5 +86,17 @@ public class OrderResponseDTO {
 
     public void setEmail(String email) {
         this.email = email;
+    }
+
+    @Override
+    public String toString() {
+        return "OrderResponseDTO{" +
+                "id=" + id +
+                ", userId=" + userId +
+                ", status='" + status + '\'' +
+                ", createdAt=" + createdAt +
+                ", userName='" + userName + '\'' +
+                ", email='" + email + '\'' +
+                '}';
     }
 }

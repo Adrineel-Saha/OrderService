@@ -11,5 +11,5 @@ import java.util.Optional;
 @FeignClient(name="ProductService")
 public interface ProductFeignClient {
     @GetMapping("api/products/id/{id}")
-    Optional<ProductDTO> getProduct(@PathVariable("id") Long id);
+    ProductDTO getProduct(@PathVariable("id") Long id);
 }

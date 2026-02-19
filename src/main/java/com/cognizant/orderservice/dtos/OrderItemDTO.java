@@ -34,6 +34,7 @@ public class OrderItemDTO {
     )
     private double price;
 
+    @NotNull(message = "Order_Id is required")
     @Schema(
             description="Order Id"
     )
@@ -77,5 +78,16 @@ public class OrderItemDTO {
 
     public void setOrderId(Long orderId) {
         this.orderId = orderId;
+    }
+
+    @Override
+    public String toString() {
+        return "OrderItemDTO{" +
+                "id=" + id +
+                ", productId=" + productId +
+                ", quantity=" + quantity +
+                ", price=" + price +
+                ", orderId=" + orderId +
+                '}';
     }
 }

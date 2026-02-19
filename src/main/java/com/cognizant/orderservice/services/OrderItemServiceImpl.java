@@ -1,9 +1,6 @@
 package com.cognizant.orderservice.services;
 
-import com.cognizant.orderservice.dtos.OrderItemDTO;
-import com.cognizant.orderservice.dtos.OrderItemResponseDTO;
-import com.cognizant.orderservice.dtos.OrderResponseDTO;
-import com.cognizant.orderservice.dtos.ProductDTO;
+import com.cognizant.orderservice.dtos.*;
 import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.entities.OrderItem;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
@@ -12,6 +9,8 @@ import com.cognizant.orderservice.feignclients.UserFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +27,8 @@ public class OrderItemServiceImpl implements OrderItemService{
     @Autowired
     private ModelMapper modelMapper;
 
+    private static final Logger log = LoggerFactory.getLogger(OrderItemService.class);
+
     @Override
     public OrderItemResponseDTO addItem(OrderItemDTO orderItemDTO) {
         Long orderId=orderItemDTO.getOrderId();
@@ -36,9 +37,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         );
 
         Long productId=orderItemDTO.getProductId();
-        ProductDTO productDTO=productFeignClient.getProduct(productId).orElseThrow(
-                ()->new RuntimeException("Product not found with Id: "+ productId)
-        );
+        ProductDTO productDTO=productFeignClient.getProduct(productId);
 
         OrderItem orderItem=modelMapper.map(orderItemDTO,OrderItem.class);
         OrderItem savedOrderItem=orderItemRepository.save(orderItem);
@@ -50,14 +49,68 @@ public class OrderItemServiceImpl implements OrderItemService{
     }
 
     @Override
+    public OrderItemResponseDTO getItem(Long itemId) {
+        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
+                ()->new ResourceNotFoundException("Item not found with Id: "+ itemId)
+        );
+        Long productId=orderItem.getProductId();
+        ProductDTO productDTO=productFeignClient.getProduct(productId);
+
+        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
+        modelMapper.map(productDTO,orderItemResponseDTO);
+        orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
+        return orderItemResponseDTO;
+    }
+
+    @Override
+    public List<OrderItemResponseDTO> listItems() {
+        List<OrderItem> orderItemList=orderItemRepository.findAll();
+        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().
+                map(orderItem->{
+                    Long productId= orderItem.getProductId();
+                    ProductDTO productDTO=productFeignClient.getProduct(productId);
+                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
+                    modelMapper.map(productDTO,orderItemResponseDTO);
+                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
+                    return orderItemResponseDTO;
+                }).toList();
+
+        if(orderItemResponseDTOList.isEmpty()){
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    @Override
+    public List<OrderItemResponseDTO> listItemsByProduct(Long productId) {
+        ProductDTO productDTO=productFeignClient.getProduct(productId);
+
+        List<OrderItem> orderItemList=orderItemRepository.findByProductId(productId);
+
+        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
+                orderItem->{
+                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
+                    modelMapper.map(productDTO,orderItemResponseDTO);
+                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
+                    return orderItemResponseDTO;
+                }
+        ).toList();
+
+        if(orderItemResponseDTOList.isEmpty()){
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    @Override
     public List<OrderItemResponseDTO> listItemsByOrder(Long orderId) {
         List<OrderItem> orderItemList=orderItemRepository.findByOrderId(orderId);
         List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
                 orderItem->{
                     Long productId=orderItem.getProductId();
-                    ProductDTO productDTO=productFeignClient.getProduct(productId).orElseThrow(
-                            ()->new RuntimeException("Product not found with Id: "+ productId)
-                    );
+                    ProductDTO productDTO=productFeignClient.getProduct(productId);
                     OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
                     modelMapper.map(productDTO,orderItemResponseDTO);
                     orderItemResponseDTO.setOrderId(orderId);
@@ -74,6 +127,7 @@ public class OrderItemServiceImpl implements OrderItemService{
 
     @Override
     public OrderItemResponseDTO updateItem(Long itemId, OrderItemDTO orderItemDTO) {
+        orderItemDTO.setId(itemId);
         Long orderId=orderItemDTO.getOrderId();
 
         Order order=orderRepository.findById(orderItemDTO.getOrderId()).orElseThrow(
@@ -84,14 +138,17 @@ public class OrderItemServiceImpl implements OrderItemService{
                 ()->new RuntimeException("Order Item not found with Id: "+ itemId)
         );
 
+        if(orderItem.getOrder().getId()!=orderId){
+            throw new RuntimeException("Please enter matching Order Id: "+ orderItem.getOrder().getId());
+        }
+
         modelMapper.map(orderItemDTO,orderItem);
         orderItem.setOrder(order);
+
         OrderItem savedOrderItem=orderItemRepository.save(orderItem);
 
         Long productId= savedOrderItem.getProductId();
-        ProductDTO productDTO=productFeignClient.getProduct(productId).orElseThrow(
-                ()->new RuntimeException("Product not found with Id: "+ productId)
-        );
+        ProductDTO productDTO=productFeignClient.getProduct(productId);
 
         OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem, OrderItemResponseDTO.class);
         modelMapper.map(productDTO,orderItemResponseDTO);
@@ -105,7 +162,7 @@ public class OrderItemServiceImpl implements OrderItemService{
                 ()->new ResourceNotFoundException("Order Item  not found with Id: "+ itemId)
         );
 
-//        log.info("Deleted Product: " + product);
+        log.info("Deleted OrderItem: " + orderItem);
 
         orderItemRepository.delete(orderItem);
         return "Order Item deleted with Id: " + itemId;
