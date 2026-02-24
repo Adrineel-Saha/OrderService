@@ -118,7 +118,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         ).toList();
 
         if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Order Item List is Empty");
+            throw new RuntimeException("Item List is Empty");
         }
 
         return orderItemResponseDTOList;
@@ -158,12 +158,12 @@ public class OrderItemServiceImpl implements OrderItemService{
     @Override
     public String deleteItem(Long itemId) {
         OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
-                ()->new ResourceNotFoundException("Order Item  not found with Id: "+ itemId)
+                ()->new ResourceNotFoundException("Item not found with Id: "+ itemId)
         );
 
-        log.info("Deleted OrderItem: " + orderItem);
+        log.info("Deleted Item: " + orderItem);
 
         orderItemRepository.delete(orderItem);
-        return "Order Item deleted with Id: " + itemId;
+        return "Item deleted with Id: " + itemId;
     }
 }
