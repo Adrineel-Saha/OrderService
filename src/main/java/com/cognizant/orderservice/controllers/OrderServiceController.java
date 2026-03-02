@@ -135,7 +135,7 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<List<OrderResponseDTO>> listOrdersByUser(@PathVariable("userId") Long userId){
-        log.info("Getting All Products By User");
+        log.info("Getting All Orders By User");
         List<OrderResponseDTO> orderResponseDTOList= orderService.listOrdersByUser(userId);
         log.info("Orders list: " + orderResponseDTOList);
 
