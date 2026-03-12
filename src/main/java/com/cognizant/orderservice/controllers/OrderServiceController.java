@@ -27,6 +27,7 @@ import java.util.List;
         name="CRUD REST APIs for Order Service",
         description="CRUD REST APIs - Create Order, Get Order Update Order, Delete Order"
 )
+@CrossOrigin(originPatterns = { "http://*:9191", "https://*:9191" })
 public class OrderServiceController {
     @Autowired
     private OrderService orderService;
