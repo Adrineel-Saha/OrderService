@@ -7,6 +7,7 @@ import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.ProductFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,6 +29,7 @@ public class OrderItemServiceImpl implements OrderItemService{
 
     private static final Logger log = LoggerFactory.getLogger(OrderItemService.class);
 
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "addItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO addItem(OrderItemDTO orderItemDTO) {
         Long orderId=orderItemDTO.getOrderId();
@@ -47,6 +49,31 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTO;
     }
 
+    public OrderItemResponseDTO addItemGetDefaultProduct(OrderItemDTO orderItemDTO , Throwable throwable) {
+        Long orderId=orderItemDTO.getOrderId();
+        Order order=orderRepository.findById(orderId).orElseThrow(
+                ()->new RuntimeException("Order not found with Id: "+ orderId)
+        );
+
+        Long productId=orderItemDTO.getProductId();
+
+        ProductDTO productDTO=new ProductDTO();
+        productDTO.setId(productId);
+        productDTO.setName("Mechanical Keyboard");
+        productDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
+        productDTO.setPrice(5099);
+        productDTO.setStock(200);
+
+        OrderItem orderItem=modelMapper.map(orderItemDTO,OrderItem.class);
+        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
+
+        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem,OrderItemResponseDTO.class);
+        modelMapper.map(productDTO,orderItemResponseDTO);
+        orderItemResponseDTO.setOrderId(savedOrderItem.getId());
+        return orderItemResponseDTO;
+    }
+
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "getItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO getItem(Long itemId) {
         OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
@@ -61,6 +88,26 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTO;
     }
 
+    public OrderItemResponseDTO getItemGetDefaultProduct(Long itemId , Throwable throwable) {
+        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
+                ()->new ResourceNotFoundException("Item not found with Id: "+ itemId)
+        );
+        Long productId=orderItem.getProductId();
+
+        ProductDTO productDTO=new ProductDTO();
+        productDTO.setId(productId);
+        productDTO.setName("Mechanical Keyboard");
+        productDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
+        productDTO.setPrice(5099);
+        productDTO.setStock(200);
+
+        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
+        modelMapper.map(productDTO,orderItemResponseDTO);
+        orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
+        return orderItemResponseDTO;
+    }
+
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "listItemsGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItems() {
         List<OrderItem> orderItemList=orderItemRepository.findAll();
@@ -81,6 +128,33 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTOList;
     }
 
+    public List<OrderItemResponseDTO> listItemsGetDefaultProduct(Throwable throwable) {
+        List<OrderItem> orderItemList=orderItemRepository.findAll();
+        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().
+                map(orderItem->{
+                    Long productId= orderItem.getProductId();
+
+                    ProductDTO productDTO=new ProductDTO();
+                    productDTO.setId(productId);
+                    productDTO.setName("Wireless Mouse");
+                    productDTO.setDescription("Ergonomic 2.4GHz wireless mouse with adjustable DPI.");
+                    productDTO.setPrice(4099);
+                    productDTO.setStock(300);
+
+                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
+                    modelMapper.map(productDTO,orderItemResponseDTO);
+                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
+                    return orderItemResponseDTO;
+                }).toList();
+
+        if(orderItemResponseDTOList.isEmpty()){
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "listItemsByProductGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByProduct(Long productId) {
         ProductDTO productDTO=productFeignClient.getProduct(productId);
@@ -103,6 +177,33 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTOList;
     }
 
+    public List<OrderItemResponseDTO> listItemsByProductGetDefaultProduct(Long productId , Throwable throwable) {
+        ProductDTO productDTO=new ProductDTO();
+        productDTO.setId(productId);
+        productDTO.setName("Wireless Mouse");
+        productDTO.setDescription("Ergonomic 2.4GHz wireless mouse with adjustable DPI.");
+        productDTO.setPrice(4099);
+        productDTO.setStock(300);
+
+        List<OrderItem> orderItemList=orderItemRepository.findByProductId(productId);
+
+        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
+                orderItem->{
+                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
+                    modelMapper.map(productDTO,orderItemResponseDTO);
+                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
+                    return orderItemResponseDTO;
+                }
+        ).toList();
+
+        if(orderItemResponseDTOList.isEmpty()){
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "listItemsByOrderGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByOrder(Long orderId) {
         List<OrderItem> orderItemList=orderItemRepository.findByOrderId(orderId);
@@ -124,6 +225,34 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTOList;
     }
 
+    public List<OrderItemResponseDTO> listItemsByOrderGetDefaultProduct(Long orderId , Throwable throwable) {
+        List<OrderItem> orderItemList=orderItemRepository.findByOrderId(orderId);
+        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
+                orderItem->{
+                    Long productId=orderItem.getProductId();
+
+                    ProductDTO productDTO=new ProductDTO();
+                    productDTO.setId(productId);
+                    productDTO.setName("Mechanical Keyboard");
+                    productDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
+                    productDTO.setPrice(5099);
+                    productDTO.setStock(200);
+
+                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
+                    modelMapper.map(productDTO,orderItemResponseDTO);
+                    orderItemResponseDTO.setOrderId(orderId);
+                    return orderItemResponseDTO;
+                }
+        ).toList();
+
+        if(orderItemResponseDTOList.isEmpty()){
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    @CircuitBreaker(name = "OrderService", fallbackMethod = "updateItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO updateItem(Long itemId, OrderItemDTO orderItemDTO) {
         orderItemDTO.setId(itemId);
@@ -148,6 +277,42 @@ public class OrderItemServiceImpl implements OrderItemService{
 
         Long productId= savedOrderItem.getProductId();
         ProductDTO productDTO=productFeignClient.getProduct(productId);
+
+        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem, OrderItemResponseDTO.class);
+        modelMapper.map(productDTO,orderItemResponseDTO);
+        orderItemResponseDTO.setOrderId(orderId);
+        return orderItemResponseDTO;
+    }
+
+    public OrderItemResponseDTO updateItemGetDefaultProduct(Long itemId, OrderItemDTO orderItemDTO , Throwable throwable) {
+        orderItemDTO.setId(itemId);
+        Long orderId=orderItemDTO.getOrderId();
+
+        Order order=orderRepository.findById(orderItemDTO.getOrderId()).orElseThrow(
+                ()->new RuntimeException("Order not found with Id: "+ orderId)
+        );
+
+        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
+                ()->new RuntimeException("Order Item not found with Id: "+ itemId)
+        );
+
+        if(orderItem.getOrder().getId()!=orderId){
+            throw new RuntimeException("Please enter matching Order Id: "+ orderItem.getOrder().getId());
+        }
+
+        modelMapper.map(orderItemDTO,orderItem);
+        orderItem.setOrder(order);
+
+        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
+
+        Long productId= savedOrderItem.getProductId();
+
+        ProductDTO productDTO=new ProductDTO();
+        productDTO.setId(productId);
+        productDTO.setName("Wireless Mouse");
+        productDTO.setDescription("Ergonomic 2.4GHz wireless mouse with adjustable DPI.");
+        productDTO.setPrice(4099);
+        productDTO.setStock(300);
 
         OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem, OrderItemResponseDTO.class);
         modelMapper.map(productDTO,orderItemResponseDTO);
