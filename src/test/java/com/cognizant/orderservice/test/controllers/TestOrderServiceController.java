@@ -884,7 +884,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(1L);
         orderItemDTO.setQuantity(2);
-        orderItemDTO.setPrice(499.5);
+//        orderItemDTO.setPrice(499.5);
         orderItemDTO.setOrderId(1L);
 
         validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNull(constraintViolation));
@@ -896,7 +896,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(1L);
         orderItemDTO.setQuantity(2);
-        orderItemDTO.setPrice(499.5);
+//        orderItemDTO.setPrice(499.5);
         orderItemDTO.setOrderId(1L);
 
         OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
@@ -925,7 +925,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(1L);
         orderItemDTO.setQuantity(2);
-        orderItemDTO.setPrice(499.5);
+//        orderItemDTO.setPrice(499.5);
         orderItemDTO.setOrderId(1L);
 
         OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
@@ -953,7 +953,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(-1L);
         orderItemDTO.setQuantity(-2);
-        orderItemDTO.setPrice(-499.5);
+//        orderItemDTO.setPrice(-499.5);
         orderItemDTO.setOrderId(1L);
 
         validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNotNull(constraintViolation));
@@ -994,7 +994,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(1L);
         orderItemDTO.setQuantity(2);
-        orderItemDTO.setPrice(499.5);
+//        orderItemDTO.setPrice(499.5);
         orderItemDTO.setOrderId(1L);
 
         validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNull(constraintViolation));
@@ -1006,7 +1006,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(1L);
         orderItemDTO.setQuantity(2);
-        orderItemDTO.setPrice(499.5);
+//        orderItemDTO.setPrice(499.5);
         orderItemDTO.setOrderId(1L);
 
         OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
@@ -1035,7 +1035,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(1L);
         orderItemDTO.setQuantity(2);
-        orderItemDTO.setPrice(499.5);
+//        orderItemDTO.setPrice(499.5);
         orderItemDTO.setOrderId(1L);
 
         OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
@@ -1063,7 +1063,7 @@ public class TestOrderServiceController {
         orderItemDTO.setId(1L);
         orderItemDTO.setProductId(-1L);
         orderItemDTO.setQuantity(-2);
-        orderItemDTO.setPrice(-499.5);
+//        orderItemDTO.setPrice(-499.5);
         orderItemDTO.setOrderId(1L);
 
         validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNotNull(constraintViolation));

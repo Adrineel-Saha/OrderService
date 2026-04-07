@@ -28,11 +28,11 @@ public class OrderItemDTO {
     )
     private int quantity;
 
-    @Positive(message="Price should be positive")
-    @Schema(
-            description = "Price"
-    )
-    private double price;
+//    @Positive(message="Price should be positive")
+//    @Schema(
+//            description = "Price"
+//    )
+//    private double price;
 
     @NotNull(message = "Order_Id is required")
     @Schema(
@@ -64,13 +64,13 @@ public class OrderItemDTO {
         this.quantity = quantity;
     }
 
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
+//    public double getPrice() {
+//        return price;
+//    }
+//
+//    public void setPrice(double price) {
+//        this.price = price;
+//    }
 
     public Long getOrderId() {
         return orderId;
@@ -86,7 +86,6 @@ public class OrderItemDTO {
                 "id=" + id +
                 ", productId=" + productId +
                 ", quantity=" + quantity +
-                ", price=" + price +
                 ", orderId=" + orderId +
                 '}';
     }

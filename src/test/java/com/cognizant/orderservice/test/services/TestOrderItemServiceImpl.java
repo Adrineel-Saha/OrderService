@@ -515,7 +515,7 @@ public class TestOrderItemServiceImpl {
         dto.setId(null);
         dto.setProductId(11L);
         dto.setQuantity(2);
-        dto.setPrice(999.5);
+//        dto.setPrice(999.5);
         dto.setOrderId(77L);
 
         // Order exists
@@ -583,7 +583,7 @@ public class TestOrderItemServiceImpl {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
-        dto.setPrice(999.5);
+//        dto.setPrice(999.5);
         dto.setOrderId(77L);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.empty());
@@ -601,7 +601,7 @@ public class TestOrderItemServiceImpl {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
-        dto.setPrice(999.5);
+//        dto.setPrice(999.5);
         dto.setOrderId(77L);
 
         Order order = new Order();
@@ -632,7 +632,7 @@ public class TestOrderItemServiceImpl {
         dto.setOrderId(77L);              // Must match existing item's order
         dto.setProductId(11L);
         dto.setQuantity(5);
-        dto.setPrice(1499.0);
+//        dto.setPrice(1499.0);
 
         // Order exists
         Order order = new Order();
@@ -706,7 +706,7 @@ public class TestOrderItemServiceImpl {
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-        dto.setPrice(1499.0);
+//        dto.setPrice(1499.0);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.empty());
 
@@ -726,7 +726,7 @@ public class TestOrderItemServiceImpl {
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-        dto.setPrice(1499.0);
+//        dto.setPrice(1499.0);
 
         Order order = new Order();
         order.setId(77L);
@@ -750,7 +750,7 @@ public class TestOrderItemServiceImpl {
         dto.setOrderId(99L); // Different from item's existing order id
         dto.setProductId(11L);
         dto.setQuantity(5);
-        dto.setPrice(1499.0);
+//        dto.setPrice(1499.0);
 
         Order order = new Order();
         order.setId(99L);
@@ -780,7 +780,7 @@ public class TestOrderItemServiceImpl {
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-        dto.setPrice(1499.0);
+//        dto.setPrice(1499.0);
 
         Order order = new Order();
         order.setId(77L);
@@ -826,7 +826,7 @@ public class TestOrderItemServiceImpl {
         dto.setId(null);
         dto.setProductId(10L);   // valid: positive & not null
         dto.setQuantity(1);      // valid: >= 1
-        dto.setPrice(49.99);     // valid: positive
+//        dto.setPrice(49.99);     // valid: positive
         dto.setOrderId(20L);     // valid: not null
 
         Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
@@ -838,7 +838,7 @@ public class TestOrderItemServiceImpl {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(null);  // should trigger @NotNull
         dto.setQuantity(1);
-        dto.setPrice(10.0);
+//        dto.setPrice(10.0);
         dto.setOrderId(1L);
 
         Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
@@ -853,7 +853,7 @@ public class TestOrderItemServiceImpl {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(-5L);   // should trigger @Positive
         dto.setQuantity(1);
-        dto.setPrice(10.0);
+//        dto.setPrice(10.0);
         dto.setOrderId(1L);
 
         Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
@@ -868,7 +868,7 @@ public class TestOrderItemServiceImpl {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(10L);
         dto.setQuantity(0);      // should trigger @Min(1)
-        dto.setPrice(10.0);
+//        dto.setPrice(10.0);
         dto.setOrderId(1L);
 
         Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
@@ -878,27 +878,27 @@ public class TestOrderItemServiceImpl {
                 .anyMatch(msg -> msg.contains("Quantity must be at least 1"));
     }
 
-    @Test
-    public void testOrderItemDTOValidation_PriceNegative() {
-        OrderItemDTO dto = new OrderItemDTO();
-        dto.setProductId(10L);
-        dto.setQuantity(2);
-        dto.setPrice(-1.0);      // should trigger @Positive
-        dto.setOrderId(1L);
-
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-
-        assertThat(violations)
-                .extracting(v -> v.getMessage())
-                .anyMatch(msg -> msg.contains("Price should be positive"));
-    }
+//    @Test
+//    public void testOrderItemDTOValidation_PriceNegative() {
+//        OrderItemDTO dto = new OrderItemDTO();
+//        dto.setProductId(10L);
+//        dto.setQuantity(2);
+////        dto.setPrice(-1.0);      // should trigger @Positive
+//        dto.setOrderId(1L);
+//
+//        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
+//
+//        assertThat(violations)
+//                .extracting(v -> v.getMessage())
+//                .anyMatch(msg -> msg.contains("Price should be positive"));
+//    }
 
     @Test
     public void testOrderItemDTOValidation_OrderIdNull() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(10L);
         dto.setQuantity(2);
-        dto.setPrice(19.99);
+//        dto.setPrice(19.99);
         dto.setOrderId(null);    // should trigger @NotNull
 
         Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
@@ -908,24 +908,24 @@ public class TestOrderItemServiceImpl {
                 .anyMatch(msg -> msg.contains("Order_Id is required"));
     }
 
-    @Test
-    public void testOrderItemDTOValidation_MultipleViolationsTogether() {
-        OrderItemDTO dto = new OrderItemDTO();
-        dto.setProductId(null);  // NotNull violation
-        dto.setQuantity(0);      // Min violation
-        dto.setPrice(-5.0);      // Positive violation
-        dto.setOrderId(null);    // NotNull violation
-
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-
-        assertThat(violations).hasSizeGreaterThanOrEqualTo(4);
-        assertThat(violations)
-                .extracting(ConstraintViolation::getMessage)
-                .contains(
-                        "Product_Id is required",
-                        "Quantity must be at least 1",
-                        "Price should be positive",
-                        "Order_Id is required"
-                );
-    }
+//    @Test
+//    public void testOrderItemDTOValidation_MultipleViolationsTogether() {
+//        OrderItemDTO dto = new OrderItemDTO();
+//        dto.setProductId(null);  // NotNull violation
+//        dto.setQuantity(0);      // Min violation
+////        dto.setPrice(-5.0);      // Positive violation
+//        dto.setOrderId(null);    // NotNull violation
+//
+//        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
+//
+//        assertThat(violations).hasSizeGreaterThanOrEqualTo(4);
+//        assertThat(violations)
+//                .extracting(ConstraintViolation::getMessage)
+//                .contains(
+//                        "Product_Id is required",
+//                        "Quantity must be at least 1",
+//                        "Price should be positive",
+//                        "Order_Id is required"
+//                );
+//    }
 }
