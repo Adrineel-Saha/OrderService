@@ -59,7 +59,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsPositiveOneItemFound(){
+    void testListItemsPositiveOneItemFound(){
         try{
             List<OrderItem> orderItemListMock=mock(List.class);
             when(orderItemRepository.findAll()).thenReturn(orderItemListMock);
@@ -90,7 +90,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsPositiveMultipleItemsFound(){
+    void testListItemsPositiveMultipleItemsFound(){
         try{
             List<OrderItem> orderItemListMock=mock(List.class);
             when(orderItemRepository.findAll()).thenReturn(orderItemListMock);
@@ -129,7 +129,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsNegativeWhenProductIsNotFound(){
+    void testListItemsNegativeWhenProductIsNotFound(){
         try{
             OrderItem orderItemMock=mock(OrderItem.class);
             when(orderItemRepository.findAll()).thenReturn(List.of(orderItemMock));
@@ -151,7 +151,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsNegativeWhenListIsEmpty(){
+    void testListItemsNegativeWhenListIsEmpty(){
         try{
             when(orderItemRepository.findAll()).thenReturn(List.of());
 
@@ -165,7 +165,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByProductPositiveOneItemFound(){
+    void testListItemsByProductPositiveOneItemFound(){
         try{
             Long productId=1l;
 
@@ -195,7 +195,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByProductPositiveMultipleItemFound(){
+    void testListItemsByProductPositiveMultipleItemFound(){
         try{
             Long productId=1l;
 
@@ -231,7 +231,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByProductNegativeWhenProductIsNotFound(){
+    void testListItemsByProductNegativeWhenProductIsNotFound(){
         Long productId=1l;
         try{
 
@@ -251,7 +251,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testItemsByProductNegativeWhenListIsEmpty(){
+    void testItemsByProductNegativeWhenListIsEmpty(){
         Long productId=1l;
         try{
             when(orderItemRepository.findByProductId(any())).thenReturn(List.of());
@@ -266,7 +266,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByOrderPositiveOneItemFound(){
+    void testListItemsByOrderPositiveOneItemFound(){
         try{
             Long orderId=1L;
             List<OrderItem> orderItemListMock=mock(List.class);
@@ -298,7 +298,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByOrderPositiveMultipleItemsFound(){
+    void testListItemsByOrderPositiveMultipleItemsFound(){
         try{
             Long orderId=1L;
             List<OrderItem> orderItemListMock=mock(List.class);
@@ -338,7 +338,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByOrderNegativeWhenProductIsNotFound(){
+    void testListItemsByOrderNegativeWhenProductIsNotFound(){
         Long orderId=1L;
 
         try{
@@ -362,7 +362,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByOrderNegativeWhenListIsEmpty(){
+    void testListItemsByOrderNegativeWhenListIsEmpty(){
         Long orderId=1L;
         try{
             when(orderItemRepository.findByOrderId(any())).thenReturn(List.of());
@@ -377,7 +377,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testGetItemPositive(){
+    void testGetItemPositive(){
         try{
             OrderItem orderItem=new OrderItem();
             orderItem.setId(1L);
@@ -425,7 +425,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testGetItemNegativeWhenProductIsNotFound(){
+    void testGetItemNegativeWhenProductIsNotFound(){
         try{
             OrderItem orderItem=new OrderItem();
             orderItem.setId(1L);
@@ -457,7 +457,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testGetItemNegativeWhenItemIsNotFound(){
+    void testGetItemNegativeWhenItemIsNotFound(){
         try{
             when(orderItemRepository.findById(any())).thenReturn(Optional.empty());
             OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
@@ -469,7 +469,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testDeleteItemPositive(){
+    void testDeleteItemPositive(){
         try{
             OrderItem orderItem=new OrderItem();
             orderItem.setId(1L);
@@ -494,7 +494,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testDeleteOrderNegativeWhenOrderIsNotFound(){
+    void testDeleteOrderNegativeWhenOrderIsNotFound(){
         try{
             when(orderItemRepository.findById(any())).thenReturn(Optional.empty());
             String result=orderItemServiceImpl.deleteItem(1L);
@@ -509,7 +509,7 @@ public class TestOrderItemServiceImpl {
     // addItem(OrderItemDTO) – Positive
     // ------------------------------------------------------------
     @Test
-    public void testAddItemPositive() {
+    void testAddItemPositive() {
         // Input DTO
         OrderItemDTO dto = new OrderItemDTO();
         dto.setId(null);
@@ -579,7 +579,7 @@ public class TestOrderItemServiceImpl {
     // addItem(OrderItemDTO) – Negative: Order not found
     // ------------------------------------------------------------
     @Test
-    public void testAddItemNegativeWhenOrderNotFound() {
+    void testAddItemNegativeWhenOrderNotFound() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
@@ -597,7 +597,7 @@ public class TestOrderItemServiceImpl {
     // addItem(OrderItemDTO) – Negative: Product not found
     // ------------------------------------------------------------
     @Test
-    public void testAddItemNegativeWhenProductNotFound() {
+    void testAddItemNegativeWhenProductNotFound() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
@@ -624,7 +624,7 @@ public class TestOrderItemServiceImpl {
     // updateItem(Long, OrderItemDTO) – Positive
     // ------------------------------------------------------------
     @Test
-    public void testUpdateItemPositive() {
+    void testUpdateItemPositive() {
         Long itemId = 555L;
 
         // Input DTO
@@ -699,7 +699,7 @@ public class TestOrderItemServiceImpl {
     // updateItem(Long, OrderItemDTO) – Negative: Order not found
     // ------------------------------------------------------------
     @Test
-    public void testUpdateItemNegativeWhenOrderNotFound() {
+    void testUpdateItemNegativeWhenOrderNotFound() {
         Long itemId = 555L;
 
         OrderItemDTO dto = new OrderItemDTO();
@@ -719,7 +719,7 @@ public class TestOrderItemServiceImpl {
     // updateItem(Long, OrderItemDTO) – Negative: OrderItem not found
     // ------------------------------------------------------------
     @Test
-    public void testUpdateItemNegativeWhenOrderItemNotFound() {
+    void testUpdateItemNegativeWhenOrderItemNotFound() {
         Long itemId = 555L;
 
         OrderItemDTO dto = new OrderItemDTO();
@@ -743,7 +743,7 @@ public class TestOrderItemServiceImpl {
     // updateItem(Long, OrderItemDTO) – Negative: OrderId mismatch
     // ------------------------------------------------------------
     @Test
-    public void testUpdateItemNegativeWhenOrderIdMismatch() {
+    void testUpdateItemNegativeWhenOrderIdMismatch() {
         Long itemId = 555L;
 
         OrderItemDTO dto = new OrderItemDTO();
@@ -773,7 +773,7 @@ public class TestOrderItemServiceImpl {
     // updateItem(Long, OrderItemDTO) – Negative: Product not found
     // ------------------------------------------------------------
     @Test
-    public void testUpdateItemNegativeWhenProductNotFound() {
+    void testUpdateItemNegativeWhenProductNotFound() {
         Long itemId = 555L;
 
         OrderItemDTO dto = new OrderItemDTO();
@@ -821,7 +821,7 @@ public class TestOrderItemServiceImpl {
 // =======================
 
     @Test
-    public void testOrderItemDTOValidation_Positive_NoViolations() {
+    void testOrderItemDTOValidation_Positive_NoViolations() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setId(null);
         dto.setProductId(10L);   // valid: positive & not null
@@ -834,7 +834,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testOrderItemDTOValidation_ProductIdNull() {
+    void testOrderItemDTOValidation_ProductIdNull() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(null);  // should trigger @NotNull
         dto.setQuantity(1);
@@ -849,7 +849,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testOrderItemDTOValidation_ProductIdNegative() {
+    void testOrderItemDTOValidation_ProductIdNegative() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(-5L);   // should trigger @Positive
         dto.setQuantity(1);
@@ -864,7 +864,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testOrderItemDTOValidation_QuantityTooLow() {
+    void testOrderItemDTOValidation_QuantityTooLow() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(10L);
         dto.setQuantity(0);      // should trigger @Min(1)
@@ -879,7 +879,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testOrderItemDTOValidation_OrderIdNull() {
+    void testOrderItemDTOValidation_OrderIdNull() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(10L);
         dto.setQuantity(2);
@@ -894,7 +894,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsFallbackWhenListIsEmpty() {
+    void testListItemsFallbackWhenListIsEmpty() {
         Throwable t = new RuntimeException("Product service down");
 
         when(orderItemRepository.findAll()).thenReturn(List.of());
@@ -905,7 +905,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByProductFallbackWhenListIsEmpty() {
+    void testListItemsByProductFallbackWhenListIsEmpty() {
         Throwable t = new RuntimeException("Product service down");
 
         when(orderItemRepository.findByProductId(10L)).thenReturn(List.of());
@@ -917,7 +917,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testListItemsByOrderFallbackWhenListIsEmpty() {
+    void testListItemsByOrderFallbackWhenListIsEmpty() {
         Throwable t = new RuntimeException("Product service down");
 
         when(orderItemRepository.findByOrderId(20L)).thenReturn(List.of());
@@ -929,7 +929,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testGetItemFallbackWhenItemNotFound() {
+    void testGetItemFallbackWhenItemNotFound() {
         Throwable t = new RuntimeException("Product down");
 
         when(orderItemRepository.findById(99L)).thenReturn(Optional.empty());
@@ -941,7 +941,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testUpdateItemFallbackOrderIdMismatch() {
+    void testUpdateItemFallbackOrderIdMismatch() {
         Long itemId = 1L;
         Throwable t = new RuntimeException("Product down");
 
@@ -969,7 +969,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testUpdateItemFallbackWhenOrderNotFound() {
+    void testUpdateItemFallbackWhenOrderNotFound() {
         Long itemId = 1L;
         Throwable t = new RuntimeException("Product down");
 
@@ -985,7 +985,7 @@ public class TestOrderItemServiceImpl {
     }
 
     @Test
-    public void testAddItemFallbackWhenOrderNotFound() {
+    void testAddItemFallbackWhenOrderNotFound() {
         Throwable t = new RuntimeException("Product down");
 
         OrderItemDTO dto = new OrderItemDTO();

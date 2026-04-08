@@ -57,7 +57,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersPositiveOneOrderFound(){
+    void testListOrdersPositiveOneOrderFound(){
         try{
             List<Order> orderListMock=mock(List.class);
             when(orderRepository.findAll()).thenReturn(orderListMock);
@@ -82,7 +82,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersPositiveMultipleOrdersFound(){
+    void testListOrdersPositiveMultipleOrdersFound(){
         try{
             List<Order> orderListMock=mock(List.class);
             when(orderRepository.findAll()).thenReturn(orderListMock);
@@ -111,7 +111,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersNegativeWhenUserIsNotFound(){
+    void testListOrdersNegativeWhenUserIsNotFound(){
         try{
             Order orderMock=mock(Order.class);
             when(orderRepository.findAll()).thenReturn(List.of(orderMock));
@@ -133,7 +133,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersNegativeWhenListIsEmpty(){
+    void testListOrdersNegativeWhenListIsEmpty(){
         try{
             when(orderRepository.findAll()).thenReturn(List.of());
 
@@ -147,7 +147,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersByUsersPositiveOneOrderFound(){
+    void testListOrdersByUsersPositiveOneOrderFound(){
         try{
             Long userId=1l;
 
@@ -172,7 +172,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersByUserPositiveMultipleOrdersFound(){
+    void testListOrdersByUserPositiveMultipleOrdersFound(){
         try{
             Long userId=1l;
 
@@ -199,7 +199,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersByUserNegativeWhenUserIsNotFound(){
+    void testListOrdersByUserNegativeWhenUserIsNotFound(){
         Long userId=1l;
         try{
 
@@ -219,7 +219,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersByUserNegativeWhenListIsEmpty(){
+    void testListOrdersByUserNegativeWhenListIsEmpty(){
         Long userId=1l;
         try{
             when(orderRepository.findByUserId(any())).thenReturn(List.of());
@@ -234,7 +234,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testGetOrderPositive(){
+    void testGetOrderPositive(){
         try{
             Order order=new Order();
             order.setId(1L);
@@ -270,7 +270,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testGetOrderNegativeWhenUserIsNotFound(){
+    void testGetOrderNegativeWhenUserIsNotFound(){
         try{
             Order order=new Order();
             order.setId(1L);
@@ -295,7 +295,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testGetOrderNegativeWhenOrderIsNotFound(){
+    void testGetOrderNegativeWhenOrderIsNotFound(){
         try{
             when(orderRepository.findById(any())).thenReturn(Optional.empty());
             OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.getOrder(1L);
@@ -307,7 +307,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testDeleteOrderPositive(){
+    void testDeleteOrderPositive(){
         try{
             Order order=new Order();
             order.setId(1L);
@@ -325,7 +325,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testDeleteOrderNegativeWhenOrderIsNotFound(){
+    void testDeleteOrderNegativeWhenOrderIsNotFound(){
         try{
             when(orderRepository.findById(any())).thenReturn(Optional.empty());
             String result=orderServiceImpl.deleteOrder(1L);
@@ -337,7 +337,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testCreateOrderPositive(){
+    void testCreateOrderPositive(){
         try{
             OrderDTO orderDTO=new OrderDTO();
             orderDTO.setId(1L);
@@ -384,7 +384,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testCreateOrderNegativeWhenUserIsNotFound(){
+    void testCreateOrderNegativeWhenUserIsNotFound(){
         try{
             OrderDTO orderDTO=new OrderDTO();
             orderDTO.setId(1L);
@@ -407,7 +407,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testCreateOrderNegativeWhenUserIdIsNegative(){
+    void testCreateOrderNegativeWhenUserIdIsNegative(){
         OrderDTO orderDTO=new OrderDTO();
         orderDTO.setId(1L);
         orderDTO.setUserId(-1L);
@@ -422,7 +422,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testCreateOrderNegativeWhenStatusIsInvalid(){
+    void testCreateOrderNegativeWhenStatusIsInvalid(){
         OrderDTO orderDTO=new OrderDTO();
         orderDTO.setId(1L);
         orderDTO.setUserId(1L);
@@ -437,7 +437,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testUpdateOrderStatusPositive(){
+    void testUpdateOrderStatusPositive(){
         Long orderId=1L;
         String status="PAID";
 
@@ -481,7 +481,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testUpdateProductNegativeWhenUserIsNotFound(){
+    void testUpdateProductNegativeWhenUserIsNotFound(){
         Long orderId=1L;
         String status="PAID";
         try{
@@ -515,7 +515,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testUpdateProductNegativeWhenOrderIsNotFound(){
+    void testUpdateProductNegativeWhenOrderIsNotFound(){
         Long orderId=1L;
         String status="PAID";
         try{
@@ -529,7 +529,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testUpdateProductNegativeWhenStatusIsNotValid(){
+    void testUpdateProductNegativeWhenStatusIsNotValid(){
         Long orderId=1L;
         String status="CREATEDPAIDSHIPPEDCANCELLED";
         try{
@@ -551,7 +551,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testCreateOrderCircuitBreakerFallback() {
+    void testCreateOrderCircuitBreakerFallback() {
         OrderDTO orderDTO = new OrderDTO();
         orderDTO.setUserId(1L);
         orderDTO.setStatus("CREATED");
@@ -580,7 +580,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testGetOrderCircuitBreakerFallback() {
+    void testGetOrderCircuitBreakerFallback() {
         Order order = new Order();
         order.setId(1L);
         order.setUserId(1L);
@@ -601,7 +601,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersCircuitBreakerFallback() {
+    void testListOrdersCircuitBreakerFallback() {
         Order order = new Order();
         order.setUserId(1L);
 
@@ -622,7 +622,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testListOrdersByUserCircuitBreakerFallback() {
+    void testListOrdersByUserCircuitBreakerFallback() {
         Long userId = 1L;
 
         Order order = new Order();
@@ -645,7 +645,7 @@ public class TestOrderServiceImpl {
     }
 
     @Test
-    public void testUpdateOrderStatusCircuitBreakerFallback() {
+    void testUpdateOrderStatusCircuitBreakerFallback() {
         Long orderId = 1L;
         String status = "PAID";
 
