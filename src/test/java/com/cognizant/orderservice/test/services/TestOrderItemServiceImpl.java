@@ -878,21 +878,6 @@ public class TestOrderItemServiceImpl {
                 .anyMatch(msg -> msg.contains("Quantity must be at least 1"));
     }
 
-//    @Test
-//    public void testOrderItemDTOValidation_PriceNegative() {
-//        OrderItemDTO dto = new OrderItemDTO();
-//        dto.setProductId(10L);
-//        dto.setQuantity(2);
-////        dto.setPrice(-1.0);      // should trigger @Positive
-//        dto.setOrderId(1L);
-//
-//        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-//
-//        assertThat(violations)
-//                .extracting(v -> v.getMessage())
-//                .anyMatch(msg -> msg.contains("Price should be positive"));
-//    }
-
     @Test
     public void testOrderItemDTOValidation_OrderIdNull() {
         OrderItemDTO dto = new OrderItemDTO();
@@ -908,24 +893,112 @@ public class TestOrderItemServiceImpl {
                 .anyMatch(msg -> msg.contains("Order_Id is required"));
     }
 
-//    @Test
-//    public void testOrderItemDTOValidation_MultipleViolationsTogether() {
-//        OrderItemDTO dto = new OrderItemDTO();
-//        dto.setProductId(null);  // NotNull violation
-//        dto.setQuantity(0);      // Min violation
-////        dto.setPrice(-5.0);      // Positive violation
-//        dto.setOrderId(null);    // NotNull violation
-//
-//        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-//
-//        assertThat(violations).hasSizeGreaterThanOrEqualTo(4);
-//        assertThat(violations)
-//                .extracting(ConstraintViolation::getMessage)
-//                .contains(
-//                        "Product_Id is required",
-//                        "Quantity must be at least 1",
-//                        "Price should be positive",
-//                        "Order_Id is required"
-//                );
-//    }
+    @Test
+    public void testListItemsFallbackWhenListIsEmpty() {
+        Throwable t = new RuntimeException("Product service down");
+
+        when(orderItemRepository.findAll()).thenReturn(List.of());
+
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsGetDefaultProduct(t))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Item List is Empty");
+    }
+
+    @Test
+    public void testListItemsByProductFallbackWhenListIsEmpty() {
+        Throwable t = new RuntimeException("Product service down");
+
+        when(orderItemRepository.findByProductId(10L)).thenReturn(List.of());
+
+        assertThatThrownBy(() ->
+                orderItemServiceImpl.listItemsByProductGetDefaultProduct(10L, t))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Item List is Empty");
+    }
+
+    @Test
+    public void testListItemsByOrderFallbackWhenListIsEmpty() {
+        Throwable t = new RuntimeException("Product service down");
+
+        when(orderItemRepository.findByOrderId(20L)).thenReturn(List.of());
+
+        assertThatThrownBy(() ->
+                orderItemServiceImpl.listItemsByOrderGetDefaultProduct(20L, t))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Item List is Empty");
+    }
+
+    @Test
+    public void testGetItemFallbackWhenItemNotFound() {
+        Throwable t = new RuntimeException("Product down");
+
+        when(orderItemRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                orderItemServiceImpl.getItemGetDefaultProduct(99L, t))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Item not found with Id: 99");
+    }
+
+    @Test
+    public void testUpdateItemFallbackOrderIdMismatch() {
+        Long itemId = 1L;
+        Throwable t = new RuntimeException("Product down");
+
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setOrderId(20L);
+        dto.setProductId(10L);
+        dto.setQuantity(1);
+
+        Order order = new Order();
+        order.setId(20L);
+
+        Order existingOrder = new Order();
+        existingOrder.setId(10L);
+
+        OrderItem item = new OrderItem();
+        item.setOrder(existingOrder);
+
+        when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
+        when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(item));
+
+        assertThatThrownBy(() ->
+                orderItemServiceImpl.updateItemGetDefaultProduct(itemId, dto, t))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Please enter matching Order Id: 10");
+    }
+
+    @Test
+    public void testUpdateItemFallbackWhenOrderNotFound() {
+        Long itemId = 1L;
+        Throwable t = new RuntimeException("Product down");
+
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setOrderId(50L);
+
+        when(orderRepository.findById(50L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                orderItemServiceImpl.updateItemGetDefaultProduct(itemId, dto, t))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Order not found with Id: 50");
+    }
+
+    @Test
+    public void testAddItemFallbackWhenOrderNotFound() {
+        Throwable t = new RuntimeException("Product down");
+
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setOrderId(80L);
+        dto.setProductId(10L);
+        dto.setQuantity(1);
+
+        when(orderRepository.findById(80L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() ->
+                orderItemServiceImpl.addItemGetDefaultProduct(dto, t))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Order not found with Id: 80");
+    }
+
 }

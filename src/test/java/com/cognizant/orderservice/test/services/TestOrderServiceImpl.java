@@ -549,4 +549,128 @@ public class TestOrderServiceImpl {
                     .hasMessageContaining("Status must be one of: CREATED, PAID, SHIPPED, CANCELLED");
         }
     }
+
+    @Test
+    public void testCreateOrderCircuitBreakerFallback() {
+        OrderDTO orderDTO = new OrderDTO();
+        orderDTO.setUserId(1L);
+        orderDTO.setStatus("CREATED");
+
+        Order order = new Order();
+        order.setUserId(1L);
+
+        Order savedOrder = new Order();
+        savedOrder.setId(1L);
+        savedOrder.setUserId(1L);
+
+        OrderResponseDTO responseDTO = new OrderResponseDTO();
+        responseDTO.setUserName("Aman");
+
+        FeignException feignException = mock(FeignException.class);
+
+        when(userFeignClient.getUser(any())).thenThrow(feignException);
+        when(modelMapper.map(orderDTO, Order.class)).thenReturn(order);
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+        when(modelMapper.map(savedOrder, OrderResponseDTO.class)).thenReturn(responseDTO);
+
+        OrderResponseDTO result = orderServiceImpl.createOrderGetDefaultUser(orderDTO, feignException);
+
+        assertNotNull(result);
+        assertEquals("Aman", result.getUserName());
+    }
+
+    @Test
+    public void testGetOrderCircuitBreakerFallback() {
+        Order order = new Order();
+        order.setId(1L);
+        order.setUserId(1L);
+
+        OrderResponseDTO responseDTO = new OrderResponseDTO();
+        responseDTO.setUserName("Suraj");
+
+        when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+        when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(responseDTO);
+
+        FeignException feignException = mock(FeignException.class);
+
+        OrderResponseDTO result =
+                orderServiceImpl.getOrderGetDefaultUser(1L, feignException);
+
+        assertNotNull(result);
+        assertEquals("Suraj", result.getUserName());
+    }
+
+    @Test
+    public void testListOrdersCircuitBreakerFallback() {
+        Order order = new Order();
+        order.setUserId(1L);
+
+        when(orderRepository.findAll()).thenReturn(List.of(order));
+
+        OrderResponseDTO responseDTO = new OrderResponseDTO();
+        responseDTO.setUserName("Aman");
+
+        when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(responseDTO);
+
+        FeignException feignException = mock(FeignException.class);
+
+        List<OrderResponseDTO> result =
+                orderServiceImpl.listOrdersGetDefaultUser(feignException);
+
+        assertFalse(result.isEmpty());
+        assertEquals("Aman", result.get(0).getUserName());
+    }
+
+    @Test
+    public void testListOrdersByUserCircuitBreakerFallback() {
+        Long userId = 1L;
+
+        Order order = new Order();
+        order.setUserId(userId);
+
+        when(orderRepository.findByUserId(userId)).thenReturn(List.of(order));
+
+        OrderResponseDTO responseDTO = new OrderResponseDTO();
+        responseDTO.setUserName("Suraj");
+
+        when(modelMapper.map(order, OrderResponseDTO.class)).thenReturn(responseDTO);
+
+        FeignException feignException = mock(FeignException.class);
+
+        List<OrderResponseDTO> result =
+                orderServiceImpl.listOrdersByUserGetDefaultUser(userId, feignException);
+
+        assertFalse(result.isEmpty());
+        assertEquals("Suraj", result.get(0).getUserName());
+    }
+
+    @Test
+    public void testUpdateOrderStatusCircuitBreakerFallback() {
+        Long orderId = 1L;
+        String status = "PAID";
+
+        Order order = new Order();
+        order.setId(orderId);
+        order.setUserId(1L);
+
+        Order savedOrder = new Order();
+        savedOrder.setId(orderId);
+        savedOrder.setUserId(1L);
+        savedOrder.setStatus(status);
+
+        OrderResponseDTO responseDTO = new OrderResponseDTO();
+        responseDTO.setUserName("Aman");
+
+        when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+        when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+        when(modelMapper.map(savedOrder, OrderResponseDTO.class)).thenReturn(responseDTO);
+
+        FeignException feignException = mock(FeignException.class);
+
+        OrderResponseDTO result =
+                orderServiceImpl.updateOrderStatusGetDefaultUser(orderId, status, feignException);
+
+        assertNotNull(result);
+        assertEquals("Aman", result.getUserName());
+    }
 }
