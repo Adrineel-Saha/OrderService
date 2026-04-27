@@ -4,10 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import lombok.Data;
 
 @Schema(
         description="OrderItemDTO model information"
 )
+@Data
 public class OrderItemDTO {
     @Schema(
             description="Order Item Id"
@@ -40,53 +42,53 @@ public class OrderItemDTO {
     )
     private Long orderId;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
-
-    public int getQuantity() {
-        return quantity;
-    }
-
-    public void setQuantity(int quantity) {
-        this.quantity = quantity;
-    }
-
-//    public double getPrice() {
-//        return price;
+//    public Long getId() {
+//        return id;
 //    }
 //
-//    public void setPrice(double price) {
-//        this.price = price;
+//    public void setId(Long id) {
+//        this.id = id;
 //    }
-
-    public Long getOrderId() {
-        return orderId;
-    }
-
-    public void setOrderId(Long orderId) {
-        this.orderId = orderId;
-    }
-
-    @Override
-    public String toString() {
-        return "OrderItemDTO{" +
-                "id=" + id +
-                ", productId=" + productId +
-                ", quantity=" + quantity +
-                ", orderId=" + orderId +
-                '}';
-    }
+//
+//    public Long getProductId() {
+//        return productId;
+//    }
+//
+//    public void setProductId(Long productId) {
+//        this.productId = productId;
+//    }
+//
+//    public int getQuantity() {
+//        return quantity;
+//    }
+//
+//    public void setQuantity(int quantity) {
+//        this.quantity = quantity;
+//    }
+//
+////    public double getPrice() {
+////        return price;
+////    }
+////
+////    public void setPrice(double price) {
+////        this.price = price;
+////    }
+//
+//    public Long getOrderId() {
+//        return orderId;
+//    }
+//
+//    public void setOrderId(Long orderId) {
+//        this.orderId = orderId;
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return "OrderItemDTO{" +
+//                "id=" + id +
+//                ", productId=" + productId +
+//                ", quantity=" + quantity +
+//                ", orderId=" + orderId +
+//                '}';
+//    }
 }

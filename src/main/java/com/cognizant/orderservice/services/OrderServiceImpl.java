@@ -8,6 +8,7 @@ import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.UserFeignClient;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@Slf4j
 public class OrderServiceImpl implements OrderService{
     @Autowired
     private OrderRepository orderRepository;
@@ -27,9 +29,9 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     private ModelMapper modelMapper;
 
-    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+//    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "createOrderGetDefaultUser")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
     @Override
     public OrderResponseDTO createOrder(OrderDTO orderDTO) {
         Long userId=orderDTO.getUserId();
@@ -63,7 +65,7 @@ public class OrderServiceImpl implements OrderService{
         return orderResponseDTO;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "getOrderGetDefaultUser")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "getOrderGetDefaultUser")
     @Override
     public OrderResponseDTO getOrder(Long orderId) {
         Order order=orderRepository.findById(orderId).orElseThrow(
@@ -94,7 +96,7 @@ public class OrderServiceImpl implements OrderService{
         return orderResponseDTO;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "listOrdersGetDefaultUser")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listOrdersGetDefaultUser")
     @Override
     public List<OrderResponseDTO> listOrders() {
         List<Order> orderList=orderRepository.findAll();
@@ -137,7 +139,7 @@ public class OrderServiceImpl implements OrderService{
         return orderResponseDTOList;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "listOrdersByUserGetDefaultUser")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listOrdersByUserGetDefaultUser")
     @Override
     public List<OrderResponseDTO> listOrdersByUser(Long userId) {
         UserDTO userDTO = userFeignClient.getUser(userId);
@@ -180,7 +182,7 @@ public class OrderServiceImpl implements OrderService{
         return orderResponseDTOList;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "updateOrderStatusGetDefaultUser")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateOrderStatusGetDefaultUser")
     @Override
     public OrderResponseDTO updateOrderStatus(Long orderId, String status) {
         Order order=orderRepository.findById(orderId).orElseThrow(

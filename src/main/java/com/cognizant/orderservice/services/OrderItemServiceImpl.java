@@ -8,6 +8,7 @@ import com.cognizant.orderservice.feignclients.ProductFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 @Service
+@Slf4j
 public class OrderItemServiceImpl implements OrderItemService{
     @Autowired
     private OrderItemRepository orderItemRepository;
@@ -27,9 +29,9 @@ public class OrderItemServiceImpl implements OrderItemService{
     @Autowired
     private ModelMapper modelMapper;
 
-    private static final Logger log = LoggerFactory.getLogger(OrderItemService.class);
+//    private static final Logger log = LoggerFactory.getLogger(OrderItemService.class);
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "addItemGetDefaultProduct")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "addItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO addItem(OrderItemDTO orderItemDTO) {
         Long orderId=orderItemDTO.getOrderId();
@@ -73,7 +75,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTO;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "getItemGetDefaultProduct")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "getItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO getItem(Long itemId) {
         OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
@@ -107,7 +109,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTO;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "listItemsGetDefaultProduct")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItems() {
         List<OrderItem> orderItemList=orderItemRepository.findAll();
@@ -154,7 +156,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTOList;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "listItemsByProductGetDefaultProduct")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsByProductGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByProduct(Long productId) {
         ProductDTO productDTO=productFeignClient.getProduct(productId);
@@ -203,7 +205,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTOList;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "listItemsByOrderGetDefaultProduct")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsByOrderGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByOrder(Long orderId) {
         List<OrderItem> orderItemList=orderItemRepository.findByOrderId(orderId);
@@ -252,7 +254,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTOList;
     }
 
-    @CircuitBreaker(name = "OrderService", fallbackMethod = "updateItemGetDefaultProduct")
+    @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO updateItem(Long itemId, OrderItemDTO orderItemDTO) {
         orderItemDTO.setId(itemId);

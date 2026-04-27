@@ -1,10 +1,12 @@
 package com.cognizant.orderservice.dtos;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
 
 @Schema(
         description="UserDTO model information"
 )
+@Data
 public class ProductDTO {
     @Schema(
             description = "Product Id"
@@ -31,43 +33,43 @@ public class ProductDTO {
     )
     private int stock;
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public double getPrice() {
-        return price;
-    }
-
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    public int getStock() {
-        return stock;
-    }
-
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
+//    public Long getId() {
+//        return id;
+//    }
+//
+//    public void setId(Long id) {
+//        this.id = id;
+//    }
+//
+//    public String getName() {
+//        return name;
+//    }
+//
+//    public void setName(String name) {
+//        this.name = name;
+//    }
+//
+//    public String getDescription() {
+//        return description;
+//    }
+//
+//    public void setDescription(String description) {
+//        this.description = description;
+//    }
+//
+//    public double getPrice() {
+//        return price;
+//    }
+//
+//    public void setPrice(double price) {
+//        this.price = price;
+//    }
+//
+//    public int getStock() {
+//        return stock;
+//    }
+//
+//    public void setStock(int stock) {
+//        this.stock = stock;
+//    }
 }
