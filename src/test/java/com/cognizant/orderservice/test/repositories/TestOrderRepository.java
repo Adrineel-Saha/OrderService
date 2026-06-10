@@ -26,7 +26,7 @@ public class TestOrderRepository {
     private TestEntityManager entityManager;
 
     @Test
-    public void testFindAllPositive(){
+    void testFindAllPositive(){
         Order order=new Order();
         order.setUserId(1L);
         order.setStatus("CREATED");
@@ -39,13 +39,13 @@ public class TestOrderRepository {
     }
 
     @Test
-    public void testFindAllNegative(){
+    void testFindAllNegative(){
         List<Order> orderList = orderRepository.findAll();
         assertTrue(!orderList.iterator().hasNext());
     }
 
     @Test
-    public void testFindByIdPositive(){
+    void testFindByIdPositive(){
         Order order=new Order();
         order.setUserId(2L);
         order.setStatus("CREATED");
@@ -59,13 +59,13 @@ public class TestOrderRepository {
     }
 
     @Test
-    public void testFindByIdNegative(){
+    void testFindByIdNegative(){
         Optional<Order> orderOptional=orderRepository.findById(2L);
         assertTrue(!orderOptional.isPresent());
     }
 
     @Test
-    public void testSavePositive(){
+    void testSavePositive(){
         Order order=new Order();
         order.setUserId(3L);
         order.setStatus("PAID");
@@ -79,13 +79,13 @@ public class TestOrderRepository {
     }
 
     @Test
-    public void testSaveNegative(){
+    void testSaveNegative(){
         Optional<Order> orderOptional=orderRepository.findById(3L);
         assertTrue(!orderOptional.isPresent());
     }
 
     @Test
-    public void deletePositive(){
+    void deletePositive(){
         Order order=new Order();
         order.setUserId(4L);
         order.setStatus("SHIPPED");
@@ -100,13 +100,13 @@ public class TestOrderRepository {
     }
 
     @Test
-    public void deleteNegative(){
+    void deleteNegative(){
         Optional<Order> orderOptional=orderRepository.findById(4L);
         assertTrue(!orderOptional.isPresent());
     }
 
     @Test
-    public void findByUserIdPositive(){
+    void findByUserIdPositive(){
         Order order=new Order();
         order.setUserId(5L);
         order.setStatus("CANCELLED");
@@ -120,7 +120,7 @@ public class TestOrderRepository {
     }
 
     @Test
-    public void findByUserIdNegative(){
+    void findByUserIdNegative(){
         List<Order> orderList=orderRepository.findByUserId(5L);
         assertTrue(!orderList.iterator().hasNext());
     }

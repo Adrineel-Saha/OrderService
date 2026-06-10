@@ -1001,4 +1001,196 @@ public class TestOrderItemServiceImpl {
                 .hasMessage("Order not found with Id: 80");
     }
 
+    @Test
+    void testGetItemPositiveAssertProductId(){
+        try{
+            OrderItem orderItem=new OrderItem();
+            orderItem.setId(1L);
+            orderItem.setProductId(1L);
+            orderItem.setQuantity(2);
+            orderItem.setPrice(499.5);
+
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderItem.setOrder(order);
+
+            ProductDTO productDTO=new ProductDTO();
+            productDTO.setId(1L);
+            productDTO.setName("Mechanical Keyboard");
+            productDTO.setPrice(5099);
+            productDTO.setStock(200);
+
+            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+            orderItemResponseDTO.setId(1L);
+            orderItemResponseDTO.setProductId(1L);
+            orderItemResponseDTO.setQuantity(2);
+            orderItemResponseDTO.setPrice(499.5);
+            orderItemResponseDTO.setOrderId(1L);
+            orderItemResponseDTO.setName("Mechanical Keyboard");
+            orderItemResponseDTO.setStock(200);
+
+            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
+            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
+            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
+            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
+
+            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
+            assertEquals(1L,actualOrderItemResponseDTO.getProductId());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetItemPositiveAssertQuantity(){
+        try{
+            OrderItem orderItem=new OrderItem();
+            orderItem.setId(1L);
+            orderItem.setProductId(1L);
+            orderItem.setQuantity(2);
+            orderItem.setPrice(499.5);
+
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderItem.setOrder(order);
+
+            ProductDTO productDTO=new ProductDTO();
+            productDTO.setId(1L);
+            productDTO.setName("Mechanical Keyboard");
+            productDTO.setPrice(5099);
+            productDTO.setStock(200);
+
+            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+            orderItemResponseDTO.setId(1L);
+            orderItemResponseDTO.setProductId(1L);
+            orderItemResponseDTO.setQuantity(2);
+            orderItemResponseDTO.setPrice(499.5);
+            orderItemResponseDTO.setOrderId(1L);
+
+            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
+            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
+            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
+            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
+
+            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
+            assertEquals(2,actualOrderItemResponseDTO.getQuantity());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetItemPositiveAssertPrice(){
+        try{
+            OrderItem orderItem=new OrderItem();
+            orderItem.setId(1L);
+            orderItem.setProductId(1L);
+            orderItem.setQuantity(2);
+            orderItem.setPrice(499.5);
+
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderItem.setOrder(order);
+
+            ProductDTO productDTO=new ProductDTO();
+            productDTO.setId(1L);
+            productDTO.setName("Mechanical Keyboard");
+            productDTO.setPrice(5099);
+            productDTO.setStock(200);
+
+            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+            orderItemResponseDTO.setId(1L);
+            orderItemResponseDTO.setProductId(1L);
+            orderItemResponseDTO.setQuantity(2);
+            orderItemResponseDTO.setPrice(499.5);
+            orderItemResponseDTO.setOrderId(1L);
+
+            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
+            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
+            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
+            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
+
+            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
+            assertEquals(499.5,actualOrderItemResponseDTO.getPrice());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testDeleteItemPositiveAssertMessage(){
+        try{
+            OrderItem orderItem=new OrderItem();
+            orderItem.setId(1L);
+            orderItem.setProductId(1L);
+            orderItem.setQuantity(2);
+            orderItem.setPrice(499.5);
+
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderItem.setOrder(order);
+
+            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
+
+            String result=orderItemServiceImpl.deleteItem(1L);
+            assertEquals("Item deleted with Id: 1",result);
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testAddItemPositiveAssertQuantity(){
+        OrderItemDTO dto=new OrderItemDTO();
+        dto.setProductId(11L);
+        dto.setQuantity(3);
+        dto.setOrderId(77L);
+
+        Order order=new Order();
+        order.setId(77L);
+
+        ProductDTO productDTO=new ProductDTO();
+        productDTO.setId(11L);
+        productDTO.setName("Keyboard");
+
+        OrderItem mappedItem=new OrderItem();
+        mappedItem.setProductId(11L);
+        mappedItem.setQuantity(3);
+        mappedItem.setPrice(999.5);
+
+        OrderItem savedItem=new OrderItem();
+        savedItem.setId(555L);
+        savedItem.setProductId(11L);
+        savedItem.setQuantity(3);
+        savedItem.setPrice(999.5);
+
+        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
+        responseDTO.setId(555L);
+        responseDTO.setProductId(11L);
+        responseDTO.setQuantity(3);
+        responseDTO.setPrice(999.5);
+
+        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
+        when(productFeignClient.getProduct(eq(11L))).thenReturn(productDTO);
+        when(modelMapper.map(any(OrderItemDTO.class),eq(OrderItem.class))).thenReturn(mappedItem);
+        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
+        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+
+        OrderItemResponseDTO actual=orderItemServiceImpl.addItem(dto);
+        assertEquals(3,actual.getQuantity());
+    }
+
 }

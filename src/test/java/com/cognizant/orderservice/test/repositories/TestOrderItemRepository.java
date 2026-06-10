@@ -27,7 +27,7 @@ public class TestOrderItemRepository {
     private TestEntityManager entityManager;
 
     @Test
-    public void testFindAllPositive(){
+    void testFindAllPositive(){
         OrderItem orderItem=new OrderItem();
         orderItem.setProductId(1L);
         orderItem.setQuantity(2);
@@ -48,13 +48,13 @@ public class TestOrderItemRepository {
     }
 
     @Test
-    public void testFindAllNegative(){
+    void testFindAllNegative(){
         List<OrderItem> orderItemList = orderItemRepository.findAll();
         assertTrue(!orderItemList.iterator().hasNext());
     }
 
     @Test
-    public void testFindByIdPositive(){
+    void testFindByIdPositive(){
         OrderItem orderItem=new OrderItem();
         orderItem.setProductId(2L);
         orderItem.setQuantity(1);
@@ -76,13 +76,13 @@ public class TestOrderItemRepository {
     }
 
     @Test
-    public void testFindByIdNegative(){
+    void testFindByIdNegative(){
         Optional<OrderItem> orderItemOptional=orderItemRepository.findById(2L);
         assertTrue(!orderItemOptional.isPresent());
     }
 
     @Test
-    public void testSavePositive(){
+    void testSavePositive(){
         OrderItem orderItem=new OrderItem();
         orderItem.setProductId(3L);
         orderItem.setQuantity(3);
@@ -104,13 +104,13 @@ public class TestOrderItemRepository {
     }
 
     @Test
-    public void testSaveNegative(){
+    void testSaveNegative(){
         Optional<OrderItem> orderItemOptional=orderItemRepository.findById(3L);
         assertTrue(!orderItemOptional.isPresent());
     }
 
     @Test
-    public void deletePositive(){
+    void deletePositive(){
         OrderItem orderItem=new OrderItem();
         orderItem.setProductId(4L);
         orderItem.setQuantity(1);
@@ -133,13 +133,13 @@ public class TestOrderItemRepository {
     }
 
     @Test
-    public void deleteNegative(){
+    void deleteNegative(){
         Optional<OrderItem> orderItemOptional=orderItemRepository.findById(4L);
         assertTrue(!orderItemOptional.isPresent());
     }
 
     @Test
-    public void testFindByOrderIdPositive(){
+    void testFindByOrderIdPositive(){
         OrderItem orderItem=new OrderItem();
         orderItem.setProductId(5L);
         orderItem.setQuantity(2);
@@ -161,13 +161,13 @@ public class TestOrderItemRepository {
     }
 
     @Test
-    public void testFindByOrderIdNegative(){
+    void testFindByOrderIdNegative(){
         List<OrderItem> orderItemList = orderItemRepository.findByOrderId(5L);
         assertTrue(!orderItemList.iterator().hasNext());
     }
 
     @Test
-    public void testFindByProductIdPositive(){
+    void testFindByProductIdPositive(){
         OrderItem orderItem=new OrderItem();
         orderItem.setProductId(5L);
         orderItem.setQuantity(2);
@@ -189,7 +189,7 @@ public class TestOrderItemRepository {
     }
 
     @Test
-    public void testFindByProductIdNegative(){
+    void testFindByProductIdNegative(){
         List<OrderItem> orderItemList = orderItemRepository.findByProductId(5L);
         assertTrue(!orderItemList.iterator().hasNext());
     }

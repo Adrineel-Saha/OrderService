@@ -673,4 +673,180 @@ public class TestOrderServiceImpl {
         assertNotNull(result);
         assertEquals("Aman", result.getUserName());
     }
+
+    @Test
+    void testGetOrderPositiveAssertStatus(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.getOrder(1L);
+            assertEquals("CREATED",actualOrderResponseDTO.getStatus());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetOrderPositiveAssertUserId(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.getOrder(1L);
+            assertEquals(1L,actualOrderResponseDTO.getUserId());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderPositiveAssertStatus(){
+        try{
+            OrderDTO orderDTO=new OrderDTO();
+            orderDTO.setUserId(1L);
+            orderDTO.setStatus("CREATED");
+            orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            Order order=new Order();
+            Order savedOrder=new Order();
+            savedOrder.setId(1L);
+            savedOrder.setUserId(1L);
+            savedOrder.setStatus("CREATED");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(OrderDTO.class),eq(Order.class))).thenReturn(order);
+            when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderDTO=orderServiceImpl.createOrder(orderDTO);
+            assertEquals("CREATED",actualOrderDTO.getStatus());
+        }catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testDeleteOrderPositiveAssertMessage(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+
+            String result=orderServiceImpl.deleteOrder(1L);
+            assertEquals("Order deleted with Id: 1",result);
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testUpdateOrderStatusPositiveAssertUpdatedStatus(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+
+            Order savedOrder=new Order();
+            savedOrder.setId(1L);
+            savedOrder.setUserId(1L);
+            savedOrder.setStatus("SHIPPED");
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setStatus("SHIPPED");
+            orderResponseDTO.setUserName("Aman");
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+            when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.updateOrderStatus(1L,"SHIPPED");
+            assertEquals("SHIPPED",actualOrderResponseDTO.getStatus());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderNegativeWhenUserIdIsZero(){
+        OrderDTO orderDTO=new OrderDTO();
+        orderDTO.setUserId(0L);
+        orderDTO.setStatus("CREATED");
+        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+        Set<ConstraintViolation<OrderDTO>> violations = validator.validate(orderDTO);
+
+        assertThat(violations)
+                .extracting(v -> v.getMessage())
+                .anyMatch(msg -> msg.contains("User_Id must be a positive number"));
+    }
 }
