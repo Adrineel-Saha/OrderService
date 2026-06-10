@@ -1,4 +1,4 @@
-package com.cognizant.orderservice.test.globalexceptionhandler;
+﻿package com.cognizant.orderservice.test.globalexceptionhandler;
 
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.globalexceptionhandler.GlobalExceptionHandler;
@@ -21,7 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestGlobalExceptionHandler {
+class TestGlobalExceptionHandler {
 
     @Mock
     private ResourceNotFoundException resourceNotFoundException;

@@ -1,4 +1,4 @@
-package com.cognizant.orderservice.test.services;
+﻿package com.cognizant.orderservice.test.services;
 
 import com.cognizant.orderservice.dtos.OrderDTO;
 import com.cognizant.orderservice.dtos.OrderResponseDTO;
@@ -34,7 +34,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestOrderServiceImpl {
+class TestOrderServiceImpl {
 
     @Mock
     private OrderRepository orderRepository;

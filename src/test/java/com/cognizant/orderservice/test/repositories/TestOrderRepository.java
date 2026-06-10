@@ -1,4 +1,4 @@
-package com.cognizant.orderservice.test.repositories;
+﻿package com.cognizant.orderservice.test.repositories;
 
 import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.main.OrderServiceApplication;
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 @ContextConfiguration(classes = OrderServiceApplication.class)
 @ActiveProfiles("test")
-public class TestOrderRepository {
+class TestOrderRepository {
 
     @Autowired
     private OrderRepository orderRepository;

@@ -1,4 +1,4 @@
-package com.cognizant.orderservice.test.controllers;
+﻿package com.cognizant.orderservice.test.controllers;
 
 import com.cognizant.orderservice.controllers.OrderServiceController;
 import com.cognizant.orderservice.dtos.OrderDTO;
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = OrderServiceApplication.class)
 @ActiveProfiles("test")
-public class TestOrderServiceController {
+class TestOrderServiceController {
 
     @Mock
     private OrderService orderService;
