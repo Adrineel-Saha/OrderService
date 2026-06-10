@@ -1275,4 +1275,410 @@ public class TestOrderServiceController {
             assertTrue(false);
         }
     }
+
+    @Test
+    void testListOrdersPositiveAssertListSize() {
+        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
+
+        OrderResponseDTO dto1=new OrderResponseDTO();
+        dto1.setId(1L);
+        dto1.setUserId(1L);
+        dto1.setStatus("CREATED");
+        dto1.setUserName("Aman");
+        dto1.setEmail("Aman@example.com");
+
+        OrderResponseDTO dto2=new OrderResponseDTO();
+        dto2.setId(2L);
+        dto2.setUserId(2L);
+        dto2.setStatus("PAID");
+        dto2.setUserName("Suraj");
+        dto2.setEmail("Suraj@example.com");
+
+        orderResponseDTOList.add(dto1);
+        orderResponseDTOList.add(dto2);
+
+        try {
+            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
+            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
+            assertEquals(2,responseEntity.getBody().size());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListOrdersPositiveAssertEmail() {
+        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
+
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("CREATED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        orderResponseDTOList.add(orderResponseDTO);
+
+        try {
+            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
+            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
+            assertEquals("Aman@example.com",responseEntity.getBody().get(0).getEmail());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetOrderPositiveAssertEmail() {
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("CREATED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        try {
+            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
+            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
+            assertEquals("Aman@example.com",responseEntity.getBody().getEmail());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetOrderPositiveAssertUserName() {
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("CREATED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        try {
+            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
+            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
+            assertEquals("Aman",responseEntity.getBody().getUserName());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderPositiveAssertEmail() {
+        OrderDTO orderDTO=new OrderDTO();
+        orderDTO.setUserId(1L);
+        orderDTO.setStatus("CREATED");
+        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("CREATED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        try {
+            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
+            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
+            assertEquals("Aman@example.com",responseEntity.getBody().getEmail());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderPositiveAssertUserName() {
+        OrderDTO orderDTO=new OrderDTO();
+        orderDTO.setUserId(1L);
+        orderDTO.setStatus("CREATED");
+        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("CREATED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        try {
+            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
+            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
+            assertEquals("Aman",responseEntity.getBody().getUserName());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testUpdateOrderStatusPositiveAssertUserName() {
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("SHIPPED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        try {
+            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
+            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"SHIPPED");
+            assertEquals("Aman",responseEntity.getBody().getUserName());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListItemsPositiveAssertListSize() {
+        List<OrderItemResponseDTO> list=new ArrayList<>();
+
+        OrderItemResponseDTO item1=new OrderItemResponseDTO();
+        item1.setId(1L);
+        item1.setProductId(1L);
+        item1.setQuantity(2);
+        item1.setPrice(499.5);
+        item1.setOrderId(1L);
+        item1.setName("Mechanical Keyboard");
+
+        OrderItemResponseDTO item2=new OrderItemResponseDTO();
+        item2.setId(2L);
+        item2.setProductId(2L);
+        item2.setQuantity(1);
+        item2.setPrice(299.0);
+        item2.setOrderId(1L);
+        item2.setName("Wireless Mouse");
+
+        list.add(item1);
+        list.add(item2);
+
+        try {
+            when(orderItemService.listItems()).thenReturn(list);
+            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItems();
+            assertEquals(2,responseEntity.getBody().size());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListItemsByProductPositiveAssertListSize() {
+        List<OrderItemResponseDTO> list=new ArrayList<>();
+
+        OrderItemResponseDTO item1=new OrderItemResponseDTO();
+        item1.setId(1L);
+        item1.setProductId(1L);
+        item1.setQuantity(2);
+        item1.setPrice(499.5);
+        item1.setOrderId(1L);
+        item1.setName("Mechanical Keyboard");
+
+        list.add(item1);
+
+        try {
+            when(orderItemService.listItemsByProduct(any())).thenReturn(list);
+            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByProduct(1L);
+            assertEquals(1,responseEntity.getBody().size());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListItemsByOrderPositiveAssertListSize() {
+        List<OrderItemResponseDTO> list=new ArrayList<>();
+
+        OrderItemResponseDTO item1=new OrderItemResponseDTO();
+        item1.setId(1L);
+        item1.setProductId(1L);
+        item1.setQuantity(2);
+        item1.setPrice(499.5);
+        item1.setOrderId(1L);
+        item1.setName("Mechanical Keyboard");
+
+        OrderItemResponseDTO item2=new OrderItemResponseDTO();
+        item2.setId(2L);
+        item2.setProductId(3L);
+        item2.setQuantity(3);
+        item2.setPrice(199.0);
+        item2.setOrderId(1L);
+        item2.setName("USB Hub");
+
+        list.add(item1);
+        list.add(item2);
+
+        try {
+            when(orderItemService.listItemsByOrder(1L)).thenReturn(list);
+            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByOrder(1L);
+            assertEquals(2,responseEntity.getBody().size());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testAddItemPositiveAssertProductId() {
+        OrderItemDTO orderItemDTO=new OrderItemDTO();
+        orderItemDTO.setProductId(5L);
+        orderItemDTO.setQuantity(2);
+        orderItemDTO.setOrderId(1L);
+
+        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+        orderItemResponseDTO.setId(1L);
+        orderItemResponseDTO.setProductId(5L);
+        orderItemResponseDTO.setQuantity(2);
+        orderItemResponseDTO.setPrice(499.5);
+        orderItemResponseDTO.setOrderId(1L);
+        orderItemResponseDTO.setName("Mechanical Keyboard");
+
+        try {
+            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
+            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
+            assertEquals(5L,responseEntity.getBody().getProductId());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testAddItemPositiveAssertPrice() {
+        OrderItemDTO orderItemDTO=new OrderItemDTO();
+        orderItemDTO.setProductId(1L);
+        orderItemDTO.setQuantity(2);
+        orderItemDTO.setOrderId(1L);
+
+        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+        orderItemResponseDTO.setId(1L);
+        orderItemResponseDTO.setProductId(1L);
+        orderItemResponseDTO.setQuantity(2);
+        orderItemResponseDTO.setPrice(499.5);
+        orderItemResponseDTO.setOrderId(1L);
+        orderItemResponseDTO.setName("Mechanical Keyboard");
+
+        try {
+            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
+            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
+            assertEquals(499.5,responseEntity.getBody().getPrice());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testUpdateItemPositiveAssertProductId() {
+        OrderItemDTO orderItemDTO=new OrderItemDTO();
+        orderItemDTO.setProductId(7L);
+        orderItemDTO.setQuantity(3);
+        orderItemDTO.setOrderId(1L);
+
+        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+        orderItemResponseDTO.setId(1L);
+        orderItemResponseDTO.setProductId(7L);
+        orderItemResponseDTO.setQuantity(3);
+        orderItemResponseDTO.setPrice(799.0);
+        orderItemResponseDTO.setOrderId(1L);
+        orderItemResponseDTO.setName("Monitor Stand");
+
+        try {
+            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
+            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1L,orderItemDTO);
+            assertEquals(7L,responseEntity.getBody().getProductId());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testUpdateItemPositiveAssertPrice() {
+        OrderItemDTO orderItemDTO=new OrderItemDTO();
+        orderItemDTO.setProductId(1L);
+        orderItemDTO.setQuantity(5);
+        orderItemDTO.setOrderId(1L);
+
+        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+        orderItemResponseDTO.setId(1L);
+        orderItemResponseDTO.setProductId(1L);
+        orderItemResponseDTO.setQuantity(5);
+        orderItemResponseDTO.setPrice(1499.0);
+        orderItemResponseDTO.setOrderId(1L);
+        orderItemResponseDTO.setName("Mechanical Keyboard");
+
+        try {
+            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
+            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1L,orderItemDTO);
+            assertEquals(1499.0,responseEntity.getBody().getPrice());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetItemPositiveAssertPrice() {
+        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+        orderItemResponseDTO.setId(1L);
+        orderItemResponseDTO.setProductId(1L);
+        orderItemResponseDTO.setQuantity(2);
+        orderItemResponseDTO.setPrice(499.5);
+        orderItemResponseDTO.setOrderId(1L);
+        orderItemResponseDTO.setName("Mechanical Keyboard");
+        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
+        orderItemResponseDTO.setStock(200);
+
+        try {
+            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
+            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
+            assertEquals(499.5,responseEntity.getBody().getPrice());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetItemPositiveAssertOrderId() {
+        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
+        orderItemResponseDTO.setId(1L);
+        orderItemResponseDTO.setProductId(1L);
+        orderItemResponseDTO.setQuantity(2);
+        orderItemResponseDTO.setPrice(499.5);
+        orderItemResponseDTO.setOrderId(5L);
+        orderItemResponseDTO.setName("Mechanical Keyboard");
+        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
+        orderItemResponseDTO.setStock(200);
+
+        try {
+            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
+            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
+            assertEquals(5L,responseEntity.getBody().getOrderId());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListOrdersByUserPositiveAssertEmail() {
+        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
+
+        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+        orderResponseDTO.setId(1L);
+        orderResponseDTO.setUserId(1L);
+        orderResponseDTO.setStatus("CREATED");
+        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        orderResponseDTO.setUserName("Aman");
+        orderResponseDTO.setEmail("Aman@example.com");
+
+        orderResponseDTOList.add(orderResponseDTO);
+
+        try {
+            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
+            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
+            assertEquals("Aman@example.com",responseEntity.getBody().get(0).getEmail());
+        }catch(Exception e) {
+            assertTrue(false);
+        }
+    }
 }

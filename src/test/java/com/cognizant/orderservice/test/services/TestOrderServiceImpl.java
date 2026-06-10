@@ -849,4 +849,258 @@ public class TestOrderServiceImpl {
                 .extracting(v -> v.getMessage())
                 .anyMatch(msg -> msg.contains("User_Id must be a positive number"));
     }
+
+    @Test
+    void testGetOrderPositiveAssertEmail(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.getOrder(1L);
+            assertEquals("Aman@example.com",actualOrderResponseDTO.getEmail());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testGetOrderPositiveAssertUserName(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.getOrder(1L);
+            assertEquals("Aman",actualOrderResponseDTO.getUserName());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderPositiveAssertEmail(){
+        try{
+            OrderDTO orderDTO=new OrderDTO();
+            orderDTO.setUserId(1L);
+            orderDTO.setStatus("CREATED");
+            orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            Order order=new Order();
+            Order savedOrder=new Order();
+            savedOrder.setId(1L);
+            savedOrder.setUserId(1L);
+            savedOrder.setStatus("CREATED");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(OrderDTO.class),eq(Order.class))).thenReturn(order);
+            when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderDTO=orderServiceImpl.createOrder(orderDTO);
+            assertEquals("Aman@example.com",actualOrderDTO.getEmail());
+        }catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderPositiveAssertUserName(){
+        try{
+            OrderDTO orderDTO=new OrderDTO();
+            orderDTO.setUserId(1L);
+            orderDTO.setStatus("CREATED");
+            orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            Order order=new Order();
+            Order savedOrder=new Order();
+            savedOrder.setId(1L);
+            savedOrder.setUserId(1L);
+            savedOrder.setStatus("CREATED");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setUserId(1L);
+            orderResponseDTO.setStatus("CREATED");
+            orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(OrderDTO.class),eq(Order.class))).thenReturn(order);
+            when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderDTO=orderServiceImpl.createOrder(orderDTO);
+            assertEquals("Aman",actualOrderDTO.getUserName());
+        }catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListOrdersPositiveAssertListSize(){
+        try{
+            List<Order> orderListMock=mock(List.class);
+            when(orderRepository.findAll()).thenReturn(orderListMock);
+
+            Order orderMock1=mock(Order.class);
+            Order orderMock2=mock(Order.class);
+            Order orderMock3=mock(Order.class);
+            when(orderListMock.stream()).thenReturn(Stream.of(orderMock1,orderMock2,orderMock3));
+
+            when(orderMock1.getUserId()).thenReturn(1L);
+            when(orderMock2.getUserId()).thenReturn(2L);
+            when(orderMock3.getUserId()).thenReturn(3L);
+
+            UserDTO userDTOMock=mock(UserDTO.class);
+            when(userFeignClient.getUser(any())).thenReturn(userDTOMock);
+
+            OrderResponseDTO orderResponseDTOMock=mock(OrderResponseDTO.class);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTOMock);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTOMock);
+
+            List<OrderResponseDTO> orderResponseDTOList=orderServiceImpl.listOrders();
+            assertEquals(3,orderResponseDTOList.size());
+        }catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testListOrdersByUserPositiveAssertListSize(){
+        try{
+            Long userId=1L;
+
+            UserDTO userDTOMock=mock(UserDTO.class);
+            when(userFeignClient.getUser(any())).thenReturn(userDTOMock);
+
+            List<Order> orderListMock=mock(List.class);
+            when(orderRepository.findByUserId(any())).thenReturn(orderListMock);
+
+            Order orderMock1=mock(Order.class);
+            Order orderMock2=mock(Order.class);
+            when(orderListMock.stream()).thenReturn(Stream.of(orderMock1,orderMock2));
+
+            OrderResponseDTO orderResponseDTOMock=mock(OrderResponseDTO.class);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTOMock);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTOMock);
+
+            List<OrderResponseDTO> orderResponseDTOList=orderServiceImpl.listOrdersByUser(userId);
+            assertEquals(2,orderResponseDTOList.size());
+        }catch(Exception ex){
+            assertTrue(false);
+        }
+    }
+
+    @Test
+    void testCreateOrderNegativeWhenUserIdIsNull(){
+        OrderDTO orderDTO=new OrderDTO();
+        orderDTO.setUserId(null);
+        orderDTO.setStatus("CREATED");
+        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+
+        Set<ConstraintViolation<OrderDTO>> violations = validator.validate(orderDTO);
+
+        assertThat(violations)
+                .extracting(v -> v.getMessage())
+                .anyMatch(msg -> msg.contains("User_Id is required"));
+    }
+
+    @Test
+    void testUpdateOrderStatusPositiveAssertEmail(){
+        try{
+            Order order=new Order();
+            order.setId(1L);
+            order.setUserId(1L);
+            order.setStatus("CREATED");
+
+            Order savedOrder=new Order();
+            savedOrder.setId(1L);
+            savedOrder.setUserId(1L);
+            savedOrder.setStatus("PAID");
+
+            UserDTO userDTO=new UserDTO();
+            userDTO.setId(1L);
+            userDTO.setUserName("Aman");
+            userDTO.setEmail("Aman@example.com");
+
+            OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
+            orderResponseDTO.setId(1L);
+            orderResponseDTO.setStatus("PAID");
+            orderResponseDTO.setUserName("Aman");
+            orderResponseDTO.setEmail("Aman@example.com");
+
+            when(orderRepository.findById(any())).thenReturn(Optional.of(order));
+            when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+            when(userFeignClient.getUser(any())).thenReturn(userDTO);
+            when(modelMapper.map(any(Order.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+            when(modelMapper.map(any(UserDTO.class),eq(OrderResponseDTO.class))).thenReturn(orderResponseDTO);
+
+            OrderResponseDTO actualOrderResponseDTO=orderServiceImpl.updateOrderStatus(1L,"PAID");
+            assertEquals("Aman@example.com",actualOrderResponseDTO.getEmail());
+        } catch(Exception ex){
+            assertTrue(false);
+        }
+    }
 }
