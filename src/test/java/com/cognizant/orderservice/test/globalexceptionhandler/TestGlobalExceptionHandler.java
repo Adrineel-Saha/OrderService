@@ -29,13 +29,16 @@ public class TestGlobalExceptionHandler {
     @InjectMocks
     private GlobalExceptionHandler globalExceptionHandler;
 
+    private AutoCloseable mocks;
+
     @BeforeEach
-    void setUp() throws Exception {
-        MockitoAnnotations.initMocks(this);
+    void setUp() {
+        mocks = MockitoAnnotations.openMocks(this);
     }
 
     @AfterEach
     void tearDown() throws Exception {
+        mocks.close();
     }
 
     @Test

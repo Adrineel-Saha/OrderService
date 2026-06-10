@@ -51,14 +51,18 @@ public class TestOrderServiceImpl {
     private static final String USER_EMAIL = "Aman@example.com";
     private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 2, 1, 10, 0, 0);
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
         validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
     @AfterEach
-    void tearDown() {}
+    void tearDown() throws Exception {
+        mocks.close();
+    }
 
     // ── Builders ─────────────────────────────────────────────────────────────────
 

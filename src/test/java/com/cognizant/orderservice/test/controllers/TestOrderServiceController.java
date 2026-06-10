@@ -49,13 +49,17 @@ public class TestOrderServiceController {
     private static final String KEYBOARD_DESC = "RGB backlit mechanical keyboard with blue switches.";
     private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 2, 1, 10, 0, 0);
 
+    private AutoCloseable mocks;
+
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.initMocks(this);
+        mocks = MockitoAnnotations.openMocks(this);
     }
 
     @AfterEach
-    void tearDown() {}
+    void tearDown() throws Exception {
+        mocks.close();
+    }
 
     // ── Builders ─────────────────────────────────────────────────────────────────
 
