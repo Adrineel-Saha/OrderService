@@ -14,114 +14,90 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ContextConfiguration(classes = OrderServiceApplication.class)
 @ActiveProfiles("test")
-public class TestOrderRepository {
+class TestOrderRepository {
+
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
     private TestEntityManager entityManager;
 
-    @Test
-    void testFindAllPositive(){
-        Order order=new Order();
-        order.setUserId(1L);
-        order.setStatus("CREATED");
-        order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+    private Order buildOrder(Long userId, String status, LocalDateTime createdAt) {
+        Order order = new Order();
+        order.setUserId(userId);
+        order.setStatus(status);
+        order.setCreatedAt(createdAt);
+        return order;
+    }
 
+    @Test
+    void testFindAllPositive() {
+        entityManager.persist(buildOrder(1L, "CREATED", LocalDateTime.of(2026, 2, 1, 10, 0, 0)));
+
+        assertFalse(orderRepository.findAll().isEmpty());
+    }
+
+    @Test
+    void testFindAllNegative() {
+        assertTrue(orderRepository.findAll().isEmpty());
+    }
+
+    @Test
+    void testFindByIdPositive() {
+        Order order = buildOrder(2L, "CREATED", LocalDateTime.of(2026, 2, 2, 11, 30, 0));
         entityManager.persist(order);
 
-        List<Order> orderList = orderRepository.findAll();
-        assertTrue(orderList.iterator().hasNext());
+        assertTrue(orderRepository.findById(order.getId()).isPresent());
     }
 
     @Test
-    void testFindAllNegative(){
-        List<Order> orderList = orderRepository.findAll();
-        assertTrue(!orderList.iterator().hasNext());
+    void testFindByIdNegative() {
+        assertTrue(orderRepository.findById(2L).isEmpty());
     }
 
     @Test
-    void testFindByIdPositive(){
-        Order order=new Order();
-        order.setUserId(2L);
-        order.setStatus("CREATED");
-        order.setCreatedAt(LocalDateTime.of(2026,2,2,11,30,0));
-
-        entityManager.persist(order);
-        Long id=order.getId();
-
-        Optional<Order> orderOptional=orderRepository.findById(id);
-        assertTrue(orderOptional.isPresent());
-    }
-
-    @Test
-    void testFindByIdNegative(){
-        Optional<Order> orderOptional=orderRepository.findById(2L);
-        assertTrue(!orderOptional.isPresent());
-    }
-
-    @Test
-    void testSavePositive(){
-        Order order=new Order();
-        order.setUserId(3L);
-        order.setStatus("PAID");
-        order.setCreatedAt(LocalDateTime.of(2026,2,3,9,15,0));
-
+    void testSavePositive() {
+        Order order = buildOrder(3L, "PAID", LocalDateTime.of(2026, 2, 3, 9, 15, 0));
         orderRepository.save(order);
-        Long id=order.getId();
 
-        Optional<Order> orderOptional=orderRepository.findById(id);
-        assertTrue(orderOptional.isPresent());
+        assertTrue(orderRepository.findById(order.getId()).isPresent());
     }
 
     @Test
-    void testSaveNegative(){
-        Optional<Order> orderOptional=orderRepository.findById(3L);
-        assertTrue(!orderOptional.isPresent());
+    void testSaveNegative() {
+        assertTrue(orderRepository.findById(3L).isEmpty());
     }
 
     @Test
-    void deletePositive(){
-        Order order=new Order();
-        order.setUserId(4L);
-        order.setStatus("SHIPPED");
-        order.setCreatedAt(LocalDateTime.of(2026,2,4,14,45,0));
-
+    void deletePositive() {
+        Order order = buildOrder(4L, "SHIPPED", LocalDateTime.of(2026, 2, 4, 14, 45, 0));
         entityManager.persist(order);
-        Long id=order.getId();
+        Long id = order.getId();
 
         orderRepository.delete(order);
-        Optional<Order> orderOptional=orderRepository.findById(id);
-        assertTrue(!orderOptional.isPresent());
+
+        assertTrue(orderRepository.findById(id).isEmpty());
     }
 
     @Test
-    void deleteNegative(){
-        Optional<Order> orderOptional=orderRepository.findById(4L);
-        assertTrue(!orderOptional.isPresent());
+    void deleteNegative() {
+        assertTrue(orderRepository.findById(4L).isEmpty());
     }
 
     @Test
-    void findByUserIdPositive(){
-        Order order=new Order();
-        order.setUserId(5L);
-        order.setStatus("CANCELLED");
-        order.setCreatedAt(LocalDateTime.of(2026,2,5,16,20,0));
-
+    void findByUserIdPositive() {
+        Order order = buildOrder(5L, "CANCELLED", LocalDateTime.of(2026, 2, 5, 16, 20, 0));
         entityManager.persist(order);
-        Long userId=order.getUserId();
 
-        List<Order> orderList=orderRepository.findByUserId(userId);
-        assertTrue(orderList.iterator().hasNext());
+        assertFalse(orderRepository.findByUserId(order.getUserId()).isEmpty());
     }
 
     @Test
-    void findByUserIdNegative(){
-        List<Order> orderList=orderRepository.findByUserId(5L);
-        assertTrue(!orderList.iterator().hasNext());
+    void findByUserIdNegative() {
+        assertTrue(orderRepository.findByUserId(5L).isEmpty());
     }
 }

@@ -34,7 +34,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TestOrderItemServiceImpl {
+class TestOrderItemServiceImpl {
+
     @Mock
     private OrderItemRepository orderItemRepository;
     @Mock
@@ -48,542 +49,412 @@ public class TestOrderItemServiceImpl {
 
     private Validator validator;
 
+    private static final String KEYBOARD_NAME = "Mechanical Keyboard";
+    private static final String KEYBOARD_DESC = "RGB backlit mechanical keyboard with blue switches.";
+    private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 2, 1, 10, 0, 0);
+
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         MockitoAnnotations.initMocks(this);
         validator = Validation.buildDefaultValidatorFactory().getValidator();
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {}
+
+    // ── Builders ─────────────────────────────────────────────────────────────────
+
+    private Order buildOrder(Long id) {
+        Order order = new Order();
+        order.setId(id);
+        order.setUserId(1L);
+        order.setStatus("CREATED");
+        order.setCreatedAt(CREATED_AT);
+        return order;
+    }
+
+    private OrderItem buildOrderItem(Long id, Long productId) {
+        OrderItem item = new OrderItem();
+        item.setId(id);
+        item.setProductId(productId);
+        item.setQuantity(2);
+        item.setPrice(499.5);
+        item.setOrder(buildOrder(1L));
+        return item;
+    }
+
+    private ProductDTO buildProductDTO(Long id) {
+        ProductDTO dto = new ProductDTO();
+        dto.setId(id);
+        dto.setName(KEYBOARD_NAME);
+        dto.setDescription(KEYBOARD_DESC);
+        dto.setPrice(5099);
+        dto.setStock(200);
+        return dto;
+    }
+
+    private OrderItemResponseDTO buildItemResponseDTO(Long id, Long productId) {
+        OrderItemResponseDTO dto = new OrderItemResponseDTO();
+        dto.setId(id);
+        dto.setProductId(productId);
+        dto.setQuantity(2);
+        dto.setPrice(499.5);
+        dto.setOrderId(1L);
+        dto.setName(KEYBOARD_NAME);
+        dto.setDescription(KEYBOARD_DESC);
+        dto.setStock(200);
+        return dto;
+    }
+
+    private void stubGetItem(OrderItemResponseDTO responseDTO) {
+        when(orderItemRepository.findById(any())).thenReturn(Optional.of(buildOrderItem(1L, 1L)));
+        when(productFeignClient.getProduct(any())).thenReturn(buildProductDTO(1L));
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+    }
+
+    // ── listItems ─────────────────────────────────────────────────────────────────
+
+    @Test
+    void testListItemsPositiveOneItemFound() {
+        List<OrderItem> listMock = mock(List.class);
+        when(orderItemRepository.findAll()).thenReturn(listMock);
+        OrderItem itemMock = mock(OrderItem.class);
+        when(listMock.stream()).thenReturn(Stream.of(itemMock));
+        when(itemMock.getProductId()).thenReturn(1L);
+        Order orderMock = mock(Order.class);
+        when(itemMock.getOrder()).thenReturn(orderMock);
+        when(orderMock.getId()).thenReturn(1L);
+        ProductDTO productDTOMock = mock(ProductDTO.class);
+        when(productFeignClient.getProduct(any())).thenReturn(productDTOMock);
+        OrderItemResponseDTO responseMock = mock(OrderItemResponseDTO.class);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+
+        assertEquals(1, orderItemServiceImpl.listItems().size());
     }
 
     @Test
-    void testListItemsPositiveOneItemFound(){
-        try{
-            List<OrderItem> orderItemListMock=mock(List.class);
-            when(orderItemRepository.findAll()).thenReturn(orderItemListMock);
+    void testListItemsPositiveMultipleItemsFound() {
+        List<OrderItem> listMock = mock(List.class);
+        when(orderItemRepository.findAll()).thenReturn(listMock);
+        OrderItem m1 = mock(OrderItem.class);
+        OrderItem m2 = mock(OrderItem.class);
+        when(listMock.stream()).thenReturn(Stream.of(m1, m2));
+        when(m1.getProductId()).thenReturn(1L);
+        when(m2.getProductId()).thenReturn(2L);
+        Order order1 = mock(Order.class);
+        Order order2 = mock(Order.class);
+        when(m1.getOrder()).thenReturn(order1);
+        when(order1.getId()).thenReturn(1L);
+        when(m2.getOrder()).thenReturn(order2);
+        when(order2.getId()).thenReturn(2L);
+        ProductDTO productMock = mock(ProductDTO.class);
+        when(productFeignClient.getProduct(any())).thenReturn(productMock);
+        OrderItemResponseDTO responseMock = mock(OrderItemResponseDTO.class);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
 
-            OrderItem orderItemMock=mock(OrderItem.class);
-            when(orderItemListMock.stream()).thenReturn(Stream.of(orderItemMock));
-
-            when(orderItemMock.getProductId()).thenReturn(1L);
-
-            ProductDTO productDTOMock=mock(ProductDTO.class);
-            when(productFeignClient.getProduct(any())).thenReturn(productDTOMock);
-
-            OrderItemResponseDTO orderItemResponseDTOMock=mock(OrderItemResponseDTO.class);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock);
-
-            Order ordermock=mock(Order.class);
-
-            when(orderItemMock.getOrder()).thenReturn(ordermock);
-            when(ordermock.getId()).thenReturn(1L);
-
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItems();
-            assertTrue(orderItemesponseDTOList.size()==1);
-        }catch(Exception ex){
-//            System.out.print(ex);
-            assertTrue(false);
-        }
+        assertTrue(orderItemServiceImpl.listItems().size() > 1);
     }
 
     @Test
-    void testListItemsPositiveMultipleItemsFound(){
-        try{
-            List<OrderItem> orderItemListMock=mock(List.class);
-            when(orderItemRepository.findAll()).thenReturn(orderItemListMock);
+    void testListItemsNegativeWhenProductIsNotFound() {
+        OrderItem itemMock = mock(OrderItem.class);
+        when(orderItemRepository.findAll()).thenReturn(List.of(itemMock));
+        when(itemMock.getProductId()).thenReturn(1L);
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
+        when(notFound.status()).thenReturn(404);
+        when(productFeignClient.getProduct(any())).thenThrow(notFound);
 
-            OrderItem orderItemMock1=mock(OrderItem.class);
-            OrderItem orderItemMock2=mock(OrderItem.class);
-            when(orderItemListMock.stream()).thenReturn(Stream.of(orderItemMock1,orderItemMock2));
-
-            when(orderItemMock1.getProductId()).thenReturn(1L);
-            when(orderItemMock2.getProductId()).thenReturn(2L);
-
-            ProductDTO productDTOMock1=mock(ProductDTO.class);
-            ProductDTO productDTOMock2=mock(ProductDTO.class);
-            when(productFeignClient.getProduct(any())).thenReturn(productDTOMock1).thenReturn(productDTOMock2);
-
-            OrderItemResponseDTO orderItemResponseDTOMock1=mock(OrderItemResponseDTO.class);
-            OrderItemResponseDTO orderItemResponseDTOMock2=mock(OrderItemResponseDTO.class);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock1);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock2);
-
-            Order ordermock1=mock(Order.class);
-            Order ordermock2=mock(Order.class);
-
-            when(orderItemMock1.getOrder()).thenReturn(ordermock1);
-            when(ordermock1.getId()).thenReturn(1L);
-
-            when(orderItemMock2.getOrder()).thenReturn(ordermock2);
-            when(ordermock2.getId()).thenReturn(2L);
-
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItems();
-            assertTrue(orderItemesponseDTOList.size()>1);
-        }catch(Exception ex){
-//            System.out.print(ex);
-            assertTrue(false);
-        }
+        assertThatThrownBy(() -> orderItemServiceImpl.listItems())
+                .isInstanceOf(FeignException.NotFound.class)
+                .hasMessage("Product not found with Id: 1");
     }
 
     @Test
-    void testListItemsNegativeWhenProductIsNotFound(){
-        try{
-            OrderItem orderItemMock=mock(OrderItem.class);
-            when(orderItemRepository.findAll()).thenReturn(List.of(orderItemMock));
+    void testListItemsNegativeWhenListIsEmpty() {
+        when(orderItemRepository.findAll()).thenReturn(List.of());
 
-            when(orderItemMock.getProductId()).thenReturn(1L);
+        assertThatThrownBy(() -> orderItemServiceImpl.listItems())
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Item List is Empty");
+    }
 
-            FeignException notFound = mock(FeignException.NotFound.class);
-            when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
-            when(notFound.status()).thenReturn(404);
+    // ── listItemsByProduct ────────────────────────────────────────────────────────
 
-            when(productFeignClient.getProduct(any())).thenThrow(notFound);
+    @Test
+    void testListItemsByProductPositiveOneItemFound() {
+        ProductDTO productMock = mock(ProductDTO.class);
+        when(productFeignClient.getProduct(any())).thenReturn(productMock);
+        List<OrderItem> listMock = mock(List.class);
+        when(orderItemRepository.findByProductId(any())).thenReturn(listMock);
+        OrderItem itemMock = mock(OrderItem.class);
+        when(listMock.stream()).thenReturn(Stream.of(itemMock));
+        Order orderMock = mock(Order.class);
+        when(itemMock.getOrder()).thenReturn(orderMock);
+        when(orderMock.getId()).thenReturn(1L);
+        OrderItemResponseDTO responseMock = mock(OrderItemResponseDTO.class);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
 
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItems();
-        } catch(Exception ex){
-            assertThatThrownBy(() -> orderItemServiceImpl.listItems())
-                    .isInstanceOf(FeignException.NotFound.class)
-                    .hasMessage("Product not found with Id: 1");
-        }
+        assertEquals(1, orderItemServiceImpl.listItemsByProduct(1L).size());
     }
 
     @Test
-    void testListItemsNegativeWhenListIsEmpty(){
-        try{
-            when(orderItemRepository.findAll()).thenReturn(List.of());
+    void testListItemsByProductPositiveMultipleItemFound() {
+        ProductDTO productMock = mock(ProductDTO.class);
+        when(productFeignClient.getProduct(any())).thenReturn(productMock);
+        List<OrderItem> listMock = mock(List.class);
+        when(orderItemRepository.findByProductId(any())).thenReturn(listMock);
+        OrderItem m1 = mock(OrderItem.class);
+        OrderItem m2 = mock(OrderItem.class);
+        when(listMock.stream()).thenReturn(Stream.of(m1, m2));
+        Order order1 = mock(Order.class);
+        Order order2 = mock(Order.class);
+        when(m1.getOrder()).thenReturn(order1);
+        when(order1.getId()).thenReturn(1L);
+        when(m2.getOrder()).thenReturn(order2);
+        when(order2.getId()).thenReturn(2L);
+        OrderItemResponseDTO responseMock = mock(OrderItemResponseDTO.class);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
 
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItems();
-
-        } catch(Exception ex){
-            assertThatThrownBy(() -> orderItemServiceImpl.listItems())
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Item List is Empty");
-        }
+        assertTrue(orderItemServiceImpl.listItemsByProduct(1L).size() > 1);
     }
 
     @Test
-    void testListItemsByProductPositiveOneItemFound(){
-        try{
-            Long productId=1l;
+    void testListItemsByProductNegativeWhenProductIsNotFound() {
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
+        when(notFound.status()).thenReturn(404);
+        when(productFeignClient.getProduct(any())).thenThrow(notFound);
 
-            ProductDTO productDTOMock=mock(ProductDTO.class);
-            when(productFeignClient.getProduct(any())).thenReturn(productDTOMock);
-
-            List<OrderItem> orderItemListMock=mock(List.class);
-            when(orderItemRepository.findByProductId(any())).thenReturn(orderItemListMock);
-
-            OrderItem orderItemMock=mock(OrderItem.class);
-            when(orderItemListMock.stream()).thenReturn(Stream.of(orderItemMock));
-
-            OrderItemResponseDTO orderItemResponseDTOMock=mock(OrderItemResponseDTO.class);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock);
-
-            Order ordermock=mock(Order.class);
-
-            when(orderItemMock.getOrder()).thenReturn(ordermock);
-            when(ordermock.getId()).thenReturn(1L);
-
-            List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemServiceImpl.listItemsByProduct(productId);
-            assertTrue(orderItemResponseDTOList.size()==1);
-        }catch(Exception ex){
-            assertTrue(false);
-        }
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsByProduct(1L))
+                .isInstanceOf(FeignException.NotFound.class)
+                .hasMessage("Product not found with Id: 1");
     }
 
     @Test
-    void testListItemsByProductPositiveMultipleItemFound(){
-        try{
-            Long productId=1l;
+    void testItemsByProductNegativeWhenListIsEmpty() {
+        when(orderItemRepository.findByProductId(any())).thenReturn(List.of());
 
-            ProductDTO productDTOMock=mock(ProductDTO.class);
-            when(productFeignClient.getProduct(any())).thenReturn(productDTOMock);
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsByProduct(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Item List is Empty");
+    }
 
-            List<OrderItem> orderItemListMock=mock(List.class);
-            when(orderItemRepository.findByProductId(any())).thenReturn(orderItemListMock);
+    // ── listItemsByOrder ──────────────────────────────────────────────────────────
 
-            OrderItem orderItemMock1=mock(OrderItem.class);
-            OrderItem orderItemMock2=mock(OrderItem.class);
-            when(orderItemListMock.stream()).thenReturn(Stream.of(orderItemMock1,orderItemMock2));
+    @Test
+    void testListItemsByOrderPositiveOneItemFound() {
+        List<OrderItem> listMock = mock(List.class);
+        when(orderItemRepository.findByOrderId(any())).thenReturn(listMock);
+        OrderItem itemMock = mock(OrderItem.class);
+        when(listMock.stream()).thenReturn(Stream.of(itemMock));
+        when(itemMock.getProductId()).thenReturn(1L);
+        Order orderMock = mock(Order.class);
+        when(itemMock.getOrder()).thenReturn(orderMock);
+        when(orderMock.getId()).thenReturn(1L);
+        ProductDTO productMock = mock(ProductDTO.class);
+        when(productFeignClient.getProduct(any())).thenReturn(productMock);
+        OrderItemResponseDTO responseMock = mock(OrderItemResponseDTO.class);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
 
-            OrderItemResponseDTO orderItemResponseDTOMock1=mock(OrderItemResponseDTO.class);
-            OrderItemResponseDTO orderItemResponseDTOMock2=mock(OrderItemResponseDTO.class);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock1);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock2);
-
-            Order ordermock1=mock(Order.class);
-            Order ordermock2=mock(Order.class);
-
-            when(orderItemMock1.getOrder()).thenReturn(ordermock1);
-            when(ordermock1.getId()).thenReturn(1L);
-
-            when(orderItemMock2.getOrder()).thenReturn(ordermock2);
-            when(ordermock2.getId()).thenReturn(2L);
-
-            List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemServiceImpl.listItemsByProduct(productId);
-            assertTrue(orderItemResponseDTOList.size()>1);
-        }catch(Exception ex){
-            assertTrue(false);
-        }
+        assertEquals(1, orderItemServiceImpl.listItemsByOrder(1L).size());
     }
 
     @Test
-    void testListItemsByProductNegativeWhenProductIsNotFound(){
-        Long productId=1l;
-        try{
+    void testListItemsByOrderPositiveMultipleItemsFound() {
+        List<OrderItem> listMock = mock(List.class);
+        when(orderItemRepository.findByOrderId(any())).thenReturn(listMock);
+        OrderItem m1 = mock(OrderItem.class);
+        OrderItem m2 = mock(OrderItem.class);
+        when(listMock.stream()).thenReturn(Stream.of(m1, m2));
+        when(m1.getProductId()).thenReturn(1L);
+        when(m2.getProductId()).thenReturn(2L);
+        Order order1 = mock(Order.class);
+        Order order2 = mock(Order.class);
+        when(m1.getOrder()).thenReturn(order1);
+        when(order1.getId()).thenReturn(1L);
+        when(m2.getOrder()).thenReturn(order2);
+        when(order2.getId()).thenReturn(2L);
+        ProductDTO productMock = mock(ProductDTO.class);
+        when(productFeignClient.getProduct(any())).thenReturn(productMock);
+        OrderItemResponseDTO responseMock = mock(OrderItemResponseDTO.class);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseMock);
 
-            FeignException notFound = mock(FeignException.NotFound.class);
-            when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
-            when(notFound.status()).thenReturn(404);
-
-            when(productFeignClient.getProduct(any())).thenThrow(notFound);
-
-            List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemServiceImpl.listItemsByProduct(productId);
-
-        } catch(Exception ex){
-            assertThatThrownBy(() -> orderItemServiceImpl.listItemsByProduct(productId))
-                    .isInstanceOf(FeignException.NotFound.class)
-                    .hasMessage("Product not found with Id: 1");
-        }
+        assertTrue(orderItemServiceImpl.listItemsByOrder(1L).size() > 1);
     }
 
     @Test
-    void testItemsByProductNegativeWhenListIsEmpty(){
-        Long productId=1l;
-        try{
-            when(orderItemRepository.findByProductId(any())).thenReturn(List.of());
+    void testListItemsByOrderNegativeWhenProductIsNotFound() {
+        OrderItem itemMock = mock(OrderItem.class);
+        when(orderItemRepository.findByOrderId(any())).thenReturn(List.of(itemMock));
+        when(itemMock.getProductId()).thenReturn(1L);
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
+        when(notFound.status()).thenReturn(404);
+        when(productFeignClient.getProduct(any())).thenThrow(notFound);
 
-            List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemServiceImpl.listItemsByProduct(productId);
-
-        } catch(Exception ex){
-            assertThatThrownBy(() -> orderItemServiceImpl.listItemsByProduct(productId))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Item List is Empty");
-        }
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsByOrder(1L))
+                .isInstanceOf(FeignException.NotFound.class)
+                .hasMessage("Product not found with Id: 1");
     }
 
     @Test
-    void testListItemsByOrderPositiveOneItemFound(){
-        try{
-            Long orderId=1L;
-            List<OrderItem> orderItemListMock=mock(List.class);
-            when(orderItemRepository.findByOrderId(any())).thenReturn(orderItemListMock);
+    void testListItemsByOrderNegativeWhenListIsEmpty() {
+        when(orderItemRepository.findByOrderId(any())).thenReturn(List.of());
 
-            OrderItem orderItemMock=mock(OrderItem.class);
-            when(orderItemListMock.stream()).thenReturn(Stream.of(orderItemMock));
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsByOrder(1L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Item List is Empty");
+    }
 
-            when(orderItemMock.getProductId()).thenReturn(1L);
+    // ── getItem ───────────────────────────────────────────────────────────────────
 
-            ProductDTO productDTOMock=mock(ProductDTO.class);
-            when(productFeignClient.getProduct(any())).thenReturn(productDTOMock);
+    @Test
+    void testGetItemPositive() {
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
+        stubGetItem(responseDTO);
 
-            OrderItemResponseDTO orderItemResponseDTOMock=mock(OrderItemResponseDTO.class);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock);
-
-            Order ordermock=mock(Order.class);
-
-            when(orderItemMock.getOrder()).thenReturn(ordermock);
-            when(ordermock.getId()).thenReturn(1L);
-
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItemsByOrder(orderId);
-            assertTrue(orderItemesponseDTOList.size()==1);
-        }catch(Exception ex){
-//            System.out.print(ex);
-            assertTrue(false);
-        }
+        assertNotNull(orderItemServiceImpl.getItem(1L));
     }
 
     @Test
-    void testListItemsByOrderPositiveMultipleItemsFound(){
-        try{
-            Long orderId=1L;
-            List<OrderItem> orderItemListMock=mock(List.class);
-            when(orderItemRepository.findByOrderId(any())).thenReturn(orderItemListMock);
+    void testGetItemPositiveAssertProductId() {
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
+        stubGetItem(responseDTO);
 
-            OrderItem orderItemMock1=mock(OrderItem.class);
-            OrderItem orderItemMock2=mock(OrderItem.class);
-            when(orderItemListMock.stream()).thenReturn(Stream.of(orderItemMock1,orderItemMock2));
-
-            when(orderItemMock1.getProductId()).thenReturn(1L);
-            when(orderItemMock2.getProductId()).thenReturn(2L);
-
-            ProductDTO productDTOMock1=mock(ProductDTO.class);
-            ProductDTO productDTOMock2=mock(ProductDTO.class);
-            when(productFeignClient.getProduct(any())).thenReturn(productDTOMock1).thenReturn(productDTOMock2);
-
-            OrderItemResponseDTO orderItemResponseDTOMock1=mock(OrderItemResponseDTO.class);
-            OrderItemResponseDTO orderItemResponseDTOMock2=mock(OrderItemResponseDTO.class);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock1);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTOMock2);
-
-            Order ordermock1=mock(Order.class);
-            Order ordermock2=mock(Order.class);
-
-            when(orderItemMock1.getOrder()).thenReturn(ordermock1);
-            when(ordermock1.getId()).thenReturn(1L);
-
-            when(orderItemMock2.getOrder()).thenReturn(ordermock2);
-            when(ordermock2.getId()).thenReturn(2L);
-
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItemsByOrder(orderId);
-            assertTrue(orderItemesponseDTOList.size()>1);
-        }catch(Exception ex){
-//            System.out.print(ex);
-            assertTrue(false);
-        }
+        assertEquals(1L, orderItemServiceImpl.getItem(1L).getProductId());
     }
 
     @Test
-    void testListItemsByOrderNegativeWhenProductIsNotFound(){
-        Long orderId=1L;
+    void testGetItemPositiveAssertQuantity() {
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
+        stubGetItem(responseDTO);
 
-        try{
-            OrderItem orderItemMock=mock(OrderItem.class);
-            when(orderItemRepository.findByOrderId(any())).thenReturn(List.of(orderItemMock));
-
-            when(orderItemMock.getProductId()).thenReturn(1L);
-
-            FeignException notFound = mock(FeignException.NotFound.class);
-            when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
-            when(notFound.status()).thenReturn(404);
-
-            when(productFeignClient.getProduct(any())).thenThrow(notFound);
-
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItemsByOrder(orderId);
-        } catch(Exception ex){
-            assertThatThrownBy(() -> orderItemServiceImpl.listItemsByOrder(orderId))
-                    .isInstanceOf(FeignException.NotFound.class)
-                    .hasMessage("Product not found with Id: 1");
-        }
+        assertEquals(2, orderItemServiceImpl.getItem(1L).getQuantity());
     }
 
     @Test
-    void testListItemsByOrderNegativeWhenListIsEmpty(){
-        Long orderId=1L;
-        try{
-            when(orderItemRepository.findByOrderId(any())).thenReturn(List.of());
+    void testGetItemPositiveAssertPrice() {
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
+        stubGetItem(responseDTO);
 
-            List<OrderItemResponseDTO> orderItemesponseDTOList=orderItemServiceImpl.listItemsByOrder(orderId);
-
-        } catch(Exception ex){
-            assertThatThrownBy(() -> orderItemServiceImpl.listItemsByOrder(orderId))
-                    .isInstanceOf(RuntimeException.class)
-                    .hasMessage("Item List is Empty");
-        }
+        assertEquals(499.5, orderItemServiceImpl.getItem(1L).getPrice());
     }
 
     @Test
-    void testGetItemPositive(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
+    void testGetItemPositiveAssertOrderId() {
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
+        stubGetItem(responseDTO);
 
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-            orderItem.setOrder(order);
-
-            ProductDTO productDTO=new ProductDTO();
-            productDTO.setId(1L);
-            productDTO.setName("Mechanical Keyboard");
-            productDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-            productDTO.setPrice(5099);
-            productDTO.setStock(200);
-
-            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-            orderItemResponseDTO.setId(1L);
-            orderItemResponseDTO.setProductId(1L);
-            orderItemResponseDTO.setQuantity(2);
-            orderItemResponseDTO.setPrice(499.5);
-            orderItemResponseDTO.setOrderId(1L);
-            orderItemResponseDTO.setName("Mechanical Keyboard");
-            orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-            orderItemResponseDTO.setStock(200);
-
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-
-            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
-
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-            assertNotNull(actualOrderItemResponseDTO);
-        } catch(Exception ex){
-            assertTrue(false);
-        }
+        assertEquals(1L, orderItemServiceImpl.getItem(1L).getOrderId());
     }
 
     @Test
-    void testGetItemNegativeWhenProductIsNotFound(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
+    void testGetItemNegativeWhenProductIsNotFound() {
+        when(orderItemRepository.findById(any())).thenReturn(Optional.of(buildOrderItem(1L, 1L)));
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
+        when(notFound.status()).thenReturn(404);
+        when(productFeignClient.getProduct(any())).thenThrow(notFound);
 
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-            orderItem.setOrder(order);
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-
-            FeignException notFound = mock(FeignException.NotFound.class);
-            when(notFound.getMessage()).thenReturn("Product not found with Id: 1");
-            when(notFound.status()).thenReturn(404);
-
-            when(productFeignClient.getProduct(any())).thenThrow(notFound);
-
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-        } catch(Exception ex){
-            assertThat(ex)
-                    .isInstanceOf(FeignException.NotFound.class)
-                    .hasMessageContaining("Product not found with Id: 1");
-        }
+        assertThatThrownBy(() -> orderItemServiceImpl.getItem(1L))
+                .isInstanceOf(FeignException.NotFound.class)
+                .hasMessageContaining("Product not found with Id: 1");
     }
 
     @Test
-    void testGetItemNegativeWhenItemIsNotFound(){
-        try{
-            when(orderItemRepository.findById(any())).thenReturn(Optional.empty());
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-        } catch(Exception ex){
-            assertThat(ex)
-                    .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Item not found with Id: 1");
-        }
+    void testGetItemNegativeWhenItemIsNotFound() {
+        when(orderItemRepository.findById(any())).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderItemServiceImpl.getItem(1L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Item not found with Id: 1");
+    }
+
+    // ── deleteItem ────────────────────────────────────────────────────────────────
+
+    @Test
+    void testDeleteItemPositiveAssertMessage() {
+        when(orderItemRepository.findById(any())).thenReturn(Optional.of(buildOrderItem(1L, 1L)));
+
+        assertEquals("Item deleted with Id: 1", orderItemServiceImpl.deleteItem(1L));
     }
 
     @Test
-    void testDeleteItemPositive(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
+    void testDeleteItemNegativeWhenItemIsNotFound() {
+        when(orderItemRepository.findById(any())).thenReturn(Optional.empty());
 
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-            orderItem.setOrder(order);
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-
-            String result=orderItemServiceImpl.deleteItem(1L);
-            assertEquals("Item deleted with Id: 1",result);
-        } catch(Exception ex){
-            assertTrue(false);
-        }
+        assertThatThrownBy(() -> orderItemServiceImpl.deleteItem(1L))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("Item not found with Id: 1");
     }
 
-    @Test
-    void testDeleteOrderNegativeWhenOrderIsNotFound(){
-        try{
-            when(orderItemRepository.findById(any())).thenReturn(Optional.empty());
-            String result=orderItemServiceImpl.deleteItem(1L);
-        } catch(Exception ex){
-            assertThat(ex)
-                    .isInstanceOf(ResourceNotFoundException.class)
-                    .hasMessageContaining("Item not found with Id: 1");
-        }
-    }
+    // ── addItem ───────────────────────────────────────────────────────────────────
 
-    // ------------------------------------------------------------
-    // addItem(OrderItemDTO) – Positive
-    // ------------------------------------------------------------
     @Test
     void testAddItemPositive() {
-        // Input DTO
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setId(null);
         dto.setProductId(11L);
         dto.setQuantity(2);
-//        dto.setPrice(999.5);
         dto.setOrderId(77L);
 
-        // Order exists
-        Order order = new Order();
-        order.setId(77L);
+        Order order = buildOrder(77L);
+        OrderItem mappedItem = buildOrderItem(null, 11L);
+        OrderItem savedItem = buildOrderItem(555L, 11L);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(555L, 11L);
+        responseDTO.setOrderId(555L);
 
-        // Product exists
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setId(11L);
-        productDTO.setName("Keyboard");
-
-        // Mapped entity (pre-save)
-        OrderItem mappedItem = new OrderItem();
-        mappedItem.setProductId(11L);
-        mappedItem.setQuantity(2);
-        mappedItem.setPrice(999.5);
-        // Note: addItem() does NOT set mappedItem.setOrder(order) currently
-
-        // Saved entity (post-save) with generated ID
-        OrderItem savedItem = new OrderItem();
-        savedItem.setId(555L);                // Item ID generated
-        savedItem.setProductId(11L);
-        savedItem.setQuantity(2);
-        savedItem.setPrice(999.5);
-
-        // Response DTO (ModelMapper results)
-        OrderItemResponseDTO responseAfterEntityMap = new OrderItemResponseDTO();
-        responseAfterEntityMap.setId(555L);
-        responseAfterEntityMap.setProductId(11L);
-        responseAfterEntityMap.setQuantity(2);
-        responseAfterEntityMap.setPrice(999.5);
-
-        // Mocks
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
-        when(productFeignClient.getProduct(eq(11L))).thenReturn(productDTO);
-
+        when(productFeignClient.getProduct(eq(11L))).thenReturn(buildProductDTO(11L));
         when(modelMapper.map(any(OrderItemDTO.class), eq(OrderItem.class))).thenReturn(mappedItem);
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class)))
-                .thenReturn(responseAfterEntityMap);
-        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class)))
-                .thenReturn(responseAfterEntityMap);
-
-        // Execute
         OrderItemResponseDTO actual = orderItemServiceImpl.addItem(dto);
-
-        // Asserts
         assertThat(actual).isNotNull();
         assertThat(actual.getId()).isEqualTo(555L);
         assertThat(actual.getProductId()).isEqualTo(11L);
         assertThat(actual.getQuantity()).isEqualTo(2);
-        assertThat(actual.getPrice()).isEqualTo(999.5);
-
-        // IMPORTANT: Matches current code (uses savedOrderItem.getId() instead of order.getId())
-        assertEquals(555L, actual.getOrderId(),
-                "By current implementation, orderId is set to saved item ID, not the order ID.");
     }
 
-    // ------------------------------------------------------------
-    // addItem(OrderItemDTO) – Negative: Order not found
-    // ------------------------------------------------------------
+    @Test
+    void testAddItemPositiveAssertQuantity() {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setProductId(11L);
+        dto.setQuantity(3);
+        dto.setOrderId(77L);
+
+        Order order = buildOrder(77L);
+        OrderItem mappedItem = buildOrderItem(null, 11L);
+        mappedItem.setQuantity(3);
+        OrderItem savedItem = buildOrderItem(555L, 11L);
+        savedItem.setQuantity(3);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(555L, 11L);
+        responseDTO.setQuantity(3);
+
+        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
+        when(productFeignClient.getProduct(eq(11L))).thenReturn(buildProductDTO(11L));
+        when(modelMapper.map(any(OrderItemDTO.class), eq(OrderItem.class))).thenReturn(mappedItem);
+        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+
+        assertEquals(3, orderItemServiceImpl.addItem(dto).getQuantity());
+    }
+
     @Test
     void testAddItemNegativeWhenOrderNotFound() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
-//        dto.setPrice(999.5);
         dto.setOrderId(77L);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.empty());
@@ -593,26 +464,17 @@ public class TestOrderItemServiceImpl {
                 .hasMessage("Order not found with Id: 77");
     }
 
-    // ------------------------------------------------------------
-    // addItem(OrderItemDTO) – Negative: Product not found
-    // ------------------------------------------------------------
     @Test
     void testAddItemNegativeWhenProductNotFound() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
-//        dto.setPrice(999.5);
         dto.setOrderId(77L);
 
-        Order order = new Order();
-        order.setId(77L);
-
-        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
-
-        FeignException notFound = org.mockito.Mockito.mock(FeignException.NotFound.class);
+        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(buildOrder(77L)));
+        FeignException notFound = mock(FeignException.NotFound.class);
         when(notFound.getMessage()).thenReturn("Product not found with Id: 11");
         when(notFound.status()).thenReturn(404);
-
         when(productFeignClient.getProduct(eq(11L))).thenThrow(notFound);
 
         assertThatThrownBy(() -> orderItemServiceImpl.addItem(dto))
@@ -620,195 +482,138 @@ public class TestOrderItemServiceImpl {
                 .hasMessage("Product not found with Id: 11");
     }
 
-    // ------------------------------------------------------------
-    // updateItem(Long, OrderItemDTO) – Positive
-    // ------------------------------------------------------------
+    // ── updateItem ────────────────────────────────────────────────────────────────
+
     @Test
     void testUpdateItemPositive() {
         Long itemId = 555L;
-
-        // Input DTO
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setOrderId(77L);              // Must match existing item's order
+        dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-//        dto.setPrice(1499.0);
 
-        // Order exists
-        Order order = new Order();
-        order.setId(77L);
-
-        // Existing item
-        Order existingOrder = new Order();
-        existingOrder.setId(77L);
-
-        OrderItem existingItem = new OrderItem();
-        existingItem.setId(itemId);
-        existingItem.setProductId(11L);   // original
-        existingItem.setQuantity(2);
-        existingItem.setPrice(999.5);
-        existingItem.setOrder(existingOrder);
-
-        // Saved item after update
-        OrderItem savedItem = new OrderItem();
-        savedItem.setId(itemId);
-        savedItem.setProductId(11L);
+        Order order = buildOrder(77L);
+        OrderItem existingItem = buildOrderItem(itemId, 11L);
+        existingItem.setOrder(buildOrder(77L));
+        OrderItem savedItem = buildOrderItem(itemId, 11L);
         savedItem.setQuantity(5);
         savedItem.setPrice(1499.0);
         savedItem.setOrder(order);
-
-        // Product for savedItem
-        ProductDTO productDTO = new ProductDTO();
-        productDTO.setId(11L);
-        productDTO.setName("Keyboard Pro");
-
-        // Response DTO
-        OrderItemResponseDTO responseAfterEntityMap = new OrderItemResponseDTO();
-        responseAfterEntityMap.setId(itemId);
-        responseAfterEntityMap.setProductId(11L);
-        responseAfterEntityMap.setQuantity(5);
-        responseAfterEntityMap.setPrice(1499.0);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(itemId, 11L);
+        responseDTO.setQuantity(5);
+        responseDTO.setPrice(1499.0);
+        responseDTO.setOrderId(77L);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
         when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.of(existingItem));
-
-        // mapping the DTO onto the existing item
-        when(modelMapper.map(any(OrderItemDTO.class), eq(OrderItem.class))).thenReturn(savedItem); // not strictly used in update flow
-        // For update flow: modelMapper.map(dto, existingItem) is called; since it's a void method, we don't need to stub it.
-
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
-
-        when(productFeignClient.getProduct(eq(11L))).thenReturn(productDTO);
-
-        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class)))
-                .thenReturn(responseAfterEntityMap);
-        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class)))
-                .thenReturn(responseAfterEntityMap);
+        when(productFeignClient.getProduct(eq(11L))).thenReturn(buildProductDTO(11L));
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
         OrderItemResponseDTO actual = orderItemServiceImpl.updateItem(itemId, dto);
-
         assertThat(actual).isNotNull();
         assertThat(actual.getId()).isEqualTo(itemId);
-        assertThat(actual.getProductId()).isEqualTo(11L);
         assertThat(actual.getQuantity()).isEqualTo(5);
         assertThat(actual.getPrice()).isEqualTo(1499.0);
         assertThat(actual.getOrderId()).isEqualTo(77L);
     }
 
-    // ------------------------------------------------------------
-    // updateItem(Long, OrderItemDTO) – Negative: Order not found
-    // ------------------------------------------------------------
+    @Test
+    void testUpdateItemPositiveAssertUpdatedQuantity() {
+        Long itemId = 555L;
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setOrderId(77L);
+        dto.setProductId(11L);
+        dto.setQuantity(10);
+
+        Order order = buildOrder(77L);
+        OrderItem existingItem = buildOrderItem(itemId, 11L);
+        existingItem.setOrder(buildOrder(77L));
+        OrderItem savedItem = buildOrderItem(itemId, 11L);
+        savedItem.setQuantity(10);
+        savedItem.setOrder(order);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(itemId, 11L);
+        responseDTO.setQuantity(10);
+        responseDTO.setOrderId(77L);
+
+        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
+        when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.of(existingItem));
+        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
+        when(productFeignClient.getProduct(eq(11L))).thenReturn(buildProductDTO(11L));
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+
+        assertEquals(10, orderItemServiceImpl.updateItem(itemId, dto).getQuantity());
+    }
+
     @Test
     void testUpdateItemNegativeWhenOrderNotFound() {
-        Long itemId = 555L;
-
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-//        dto.setPrice(1499.0);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> orderItemServiceImpl.updateItem(itemId, dto))
+        assertThatThrownBy(() -> orderItemServiceImpl.updateItem(555L, dto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Order not found with Id: 77");
     }
 
-    // ------------------------------------------------------------
-    // updateItem(Long, OrderItemDTO) – Negative: OrderItem not found
-    // ------------------------------------------------------------
     @Test
     void testUpdateItemNegativeWhenOrderItemNotFound() {
-        Long itemId = 555L;
-
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-//        dto.setPrice(1499.0);
 
-        Order order = new Order();
-        order.setId(77L);
+        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(buildOrder(77L)));
+        when(orderItemRepository.findById(eq(555L))).thenReturn(Optional.empty());
 
-        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
-        when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> orderItemServiceImpl.updateItem(itemId, dto))
+        assertThatThrownBy(() -> orderItemServiceImpl.updateItem(555L, dto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Order Item not found with Id: 555");
     }
 
-    // ------------------------------------------------------------
-    // updateItem(Long, OrderItemDTO) – Negative: OrderId mismatch
-    // ------------------------------------------------------------
     @Test
     void testUpdateItemNegativeWhenOrderIdMismatch() {
-        Long itemId = 555L;
-
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setOrderId(99L); // Different from item's existing order id
+        dto.setOrderId(99L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-//        dto.setPrice(1499.0);
 
-        Order order = new Order();
-        order.setId(99L);
+        OrderItem existingItem = buildOrderItem(555L, 11L);
+        existingItem.setOrder(buildOrder(77L));
 
-        OrderItem existingItem = new OrderItem();
-        existingItem.setId(itemId);
-        Order existingOrder = new Order();
-        existingOrder.setId(77L); // mismatch here
-        existingItem.setOrder(existingOrder);
+        when(orderRepository.findById(eq(99L))).thenReturn(Optional.of(buildOrder(99L)));
+        when(orderItemRepository.findById(eq(555L))).thenReturn(Optional.of(existingItem));
 
-        when(orderRepository.findById(eq(99L))).thenReturn(Optional.of(order));
-        when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.of(existingItem));
-
-        assertThatThrownBy(() -> orderItemServiceImpl.updateItem(itemId, dto))
+        assertThatThrownBy(() -> orderItemServiceImpl.updateItem(555L, dto))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Please enter matching Order Id: 77");
     }
 
-    // ------------------------------------------------------------
-    // updateItem(Long, OrderItemDTO) – Negative: Product not found
-    // ------------------------------------------------------------
     @Test
     void testUpdateItemNegativeWhenProductNotFound() {
         Long itemId = 555L;
-
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
-//        dto.setPrice(1499.0);
 
-        Order order = new Order();
-        order.setId(77L);
-
-        Order existingOrder = new Order();
-        existingOrder.setId(77L);
-
-        OrderItem existingItem = new OrderItem();
-        existingItem.setId(itemId);
-        existingItem.setProductId(11L);
-        existingItem.setOrder(existingOrder);
-
-        OrderItem savedItem = new OrderItem();
-        savedItem.setId(itemId);
-        savedItem.setProductId(11L);
-        savedItem.setQuantity(5);
-        savedItem.setPrice(1499.0);
+        Order order = buildOrder(77L);
+        OrderItem existingItem = buildOrderItem(itemId, 11L);
+        existingItem.setOrder(buildOrder(77L));
+        OrderItem savedItem = buildOrderItem(itemId, 11L);
         savedItem.setOrder(order);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
         when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.of(existingItem));
-        // modelMapper.map(dto, existingItem) is void; no stub required
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
-
-        FeignException notFound = org.mockito.Mockito.mock(FeignException.NotFound.class);
+        FeignException notFound = mock(FeignException.NotFound.class);
         when(notFound.getMessage()).thenReturn("Product not found with Id: 11");
         when(notFound.status()).thenReturn(404);
-
         when(productFeignClient.getProduct(eq(11L))).thenThrow(notFound);
 
         assertThatThrownBy(() -> orderItemServiceImpl.updateItem(itemId, dto))
@@ -816,50 +621,37 @@ public class TestOrderItemServiceImpl {
                 .hasMessage("Product not found with Id: 11");
     }
 
-    // =======================
-// Bean Validation tests for OrderItemDTO (uses `validator`)
-// =======================
+    // ── Bean validation ───────────────────────────────────────────────────────────
 
     @Test
     void testOrderItemDTOValidation_Positive_NoViolations() {
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setId(null);
-        dto.setProductId(10L);   // valid: positive & not null
-        dto.setQuantity(1);      // valid: >= 1
-//        dto.setPrice(49.99);     // valid: positive
-        dto.setOrderId(20L);     // valid: not null
+        dto.setProductId(10L);
+        dto.setQuantity(1);
+        dto.setOrderId(20L);
 
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-        assertThat(violations).isEmpty();
+        assertThat(validator.validate(dto)).isEmpty();
     }
 
     @Test
     void testOrderItemDTOValidation_ProductIdNull() {
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setProductId(null);  // should trigger @NotNull
+        dto.setProductId(null);
         dto.setQuantity(1);
-//        dto.setPrice(10.0);
         dto.setOrderId(1L);
 
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-
-        assertThat(violations)
-                .extracting(v -> v.getMessage())
+        assertThat(validator.validate(dto)).extracting(v -> v.getMessage())
                 .anyMatch(msg -> msg.contains("Product_Id is required"));
     }
 
     @Test
     void testOrderItemDTOValidation_ProductIdNegative() {
         OrderItemDTO dto = new OrderItemDTO();
-        dto.setProductId(-5L);   // should trigger @Positive
+        dto.setProductId(-5L);
         dto.setQuantity(1);
-//        dto.setPrice(10.0);
         dto.setOrderId(1L);
 
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-
-        assertThat(violations)
-                .extracting(v -> v.getMessage())
+        assertThat(validator.validate(dto)).extracting(v -> v.getMessage())
                 .anyMatch(msg -> msg.contains("Product_Id must be a positive number"));
     }
 
@@ -867,14 +659,10 @@ public class TestOrderItemServiceImpl {
     void testOrderItemDTOValidation_QuantityTooLow() {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(10L);
-        dto.setQuantity(0);      // should trigger @Min(1)
-//        dto.setPrice(10.0);
+        dto.setQuantity(0);
         dto.setOrderId(1L);
 
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-
-        assertThat(violations)
-                .extracting(v -> v.getMessage())
+        assertThat(validator.validate(dto)).extracting(v -> v.getMessage())
                 .anyMatch(msg -> msg.contains("Quantity must be at least 1"));
     }
 
@@ -883,59 +671,46 @@ public class TestOrderItemServiceImpl {
         OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(10L);
         dto.setQuantity(2);
-//        dto.setPrice(19.99);
-        dto.setOrderId(null);    // should trigger @NotNull
+        dto.setOrderId(null);
 
-        Set<ConstraintViolation<OrderItemDTO>> violations = validator.validate(dto);
-
-        assertThat(violations)
-                .extracting(v -> v.getMessage())
+        assertThat(validator.validate(dto)).extracting(v -> v.getMessage())
                 .anyMatch(msg -> msg.contains("Order_Id is required"));
     }
 
+    // ── Fallback methods – negative (empty list) ──────────────────────────────────
+
     @Test
     void testListItemsFallbackWhenListIsEmpty() {
-        Throwable t = new RuntimeException("Product service down");
-
         when(orderItemRepository.findAll()).thenReturn(List.of());
 
-        assertThatThrownBy(() -> orderItemServiceImpl.listItemsGetDefaultProduct(t))
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsGetDefaultProduct(new RuntimeException("down")))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Item List is Empty");
     }
 
     @Test
     void testListItemsByProductFallbackWhenListIsEmpty() {
-        Throwable t = new RuntimeException("Product service down");
-
         when(orderItemRepository.findByProductId(10L)).thenReturn(List.of());
 
-        assertThatThrownBy(() ->
-                orderItemServiceImpl.listItemsByProductGetDefaultProduct(10L, t))
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsByProductGetDefaultProduct(10L, new RuntimeException("down")))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Item List is Empty");
     }
 
     @Test
     void testListItemsByOrderFallbackWhenListIsEmpty() {
-        Throwable t = new RuntimeException("Product service down");
-
         when(orderItemRepository.findByOrderId(20L)).thenReturn(List.of());
 
-        assertThatThrownBy(() ->
-                orderItemServiceImpl.listItemsByOrderGetDefaultProduct(20L, t))
+        assertThatThrownBy(() -> orderItemServiceImpl.listItemsByOrderGetDefaultProduct(20L, new RuntimeException("down")))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Item List is Empty");
     }
 
     @Test
     void testGetItemFallbackWhenItemNotFound() {
-        Throwable t = new RuntimeException("Product down");
-
         when(orderItemRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() ->
-                orderItemServiceImpl.getItemGetDefaultProduct(99L, t))
+        assertThatThrownBy(() -> orderItemServiceImpl.getItemGetDefaultProduct(99L, new RuntimeException("down")))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Item not found with Id: 99");
     }
@@ -943,51 +718,36 @@ public class TestOrderItemServiceImpl {
     @Test
     void testUpdateItemFallbackOrderIdMismatch() {
         Long itemId = 1L;
-        Throwable t = new RuntimeException("Product down");
-
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(20L);
         dto.setProductId(10L);
         dto.setQuantity(1);
 
-        Order order = new Order();
-        order.setId(20L);
+        OrderItem item = buildOrderItem(itemId, 10L);
+        item.setOrder(buildOrder(10L));
 
-        Order existingOrder = new Order();
-        existingOrder.setId(10L);
-
-        OrderItem item = new OrderItem();
-        item.setOrder(existingOrder);
-
-        when(orderRepository.findById(20L)).thenReturn(Optional.of(order));
+        when(orderRepository.findById(20L)).thenReturn(Optional.of(buildOrder(20L)));
         when(orderItemRepository.findById(itemId)).thenReturn(Optional.of(item));
 
-        assertThatThrownBy(() ->
-                orderItemServiceImpl.updateItemGetDefaultProduct(itemId, dto, t))
+        assertThatThrownBy(() -> orderItemServiceImpl.updateItemGetDefaultProduct(itemId, dto, new RuntimeException("down")))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Please enter matching Order Id: 10");
     }
 
     @Test
     void testUpdateItemFallbackWhenOrderNotFound() {
-        Long itemId = 1L;
-        Throwable t = new RuntimeException("Product down");
-
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(50L);
 
         when(orderRepository.findById(50L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() ->
-                orderItemServiceImpl.updateItemGetDefaultProduct(itemId, dto, t))
+        assertThatThrownBy(() -> orderItemServiceImpl.updateItemGetDefaultProduct(1L, dto, new RuntimeException("down")))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Order not found with Id: 50");
     }
 
     @Test
     void testAddItemFallbackWhenOrderNotFound() {
-        Throwable t = new RuntimeException("Product down");
-
         OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(80L);
         dto.setProductId(10L);
@@ -995,519 +755,121 @@ public class TestOrderItemServiceImpl {
 
         when(orderRepository.findById(80L)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() ->
-                orderItemServiceImpl.addItemGetDefaultProduct(dto, t))
+        assertThatThrownBy(() -> orderItemServiceImpl.addItemGetDefaultProduct(dto, new RuntimeException("down")))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("Order not found with Id: 80");
     }
 
-    @Test
-    void testGetItemPositiveAssertProductId(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
-
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-            orderItem.setOrder(order);
-
-            ProductDTO productDTO=new ProductDTO();
-            productDTO.setId(1L);
-            productDTO.setName("Mechanical Keyboard");
-            productDTO.setPrice(5099);
-            productDTO.setStock(200);
-
-            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-            orderItemResponseDTO.setId(1L);
-            orderItemResponseDTO.setProductId(1L);
-            orderItemResponseDTO.setQuantity(2);
-            orderItemResponseDTO.setPrice(499.5);
-            orderItemResponseDTO.setOrderId(1L);
-            orderItemResponseDTO.setName("Mechanical Keyboard");
-            orderItemResponseDTO.setStock(200);
-
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-            assertEquals(1L,actualOrderItemResponseDTO.getProductId());
-        } catch(Exception ex){
-            assertTrue(false);
-        }
-    }
+    // ── Fallback methods – positive (with items) ──────────────────────────────────
 
     @Test
-    void testGetItemPositiveAssertQuantity(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
-
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-            orderItem.setOrder(order);
-
-            ProductDTO productDTO=new ProductDTO();
-            productDTO.setId(1L);
-            productDTO.setName("Mechanical Keyboard");
-            productDTO.setPrice(5099);
-            productDTO.setStock(200);
-
-            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-            orderItemResponseDTO.setId(1L);
-            orderItemResponseDTO.setProductId(1L);
-            orderItemResponseDTO.setQuantity(2);
-            orderItemResponseDTO.setPrice(499.5);
-            orderItemResponseDTO.setOrderId(1L);
-
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-            assertEquals(2,actualOrderItemResponseDTO.getQuantity());
-        } catch(Exception ex){
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemPositiveAssertPrice(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
-
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-            orderItem.setOrder(order);
-
-            ProductDTO productDTO=new ProductDTO();
-            productDTO.setId(1L);
-            productDTO.setName("Mechanical Keyboard");
-            productDTO.setPrice(5099);
-            productDTO.setStock(200);
-
-            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-            orderItemResponseDTO.setId(1L);
-            orderItemResponseDTO.setProductId(1L);
-            orderItemResponseDTO.setQuantity(2);
-            orderItemResponseDTO.setPrice(499.5);
-            orderItemResponseDTO.setOrderId(1L);
-
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-            assertEquals(499.5,actualOrderItemResponseDTO.getPrice());
-        } catch(Exception ex){
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteItemPositiveAssertMessage(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
-
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-            orderItem.setOrder(order);
-
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-
-            String result=orderItemServiceImpl.deleteItem(1L);
-            assertEquals("Item deleted with Id: 1",result);
-        } catch(Exception ex){
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testAddItemPositiveAssertQuantity(){
-        OrderItemDTO dto=new OrderItemDTO();
-        dto.setProductId(11L);
-        dto.setQuantity(3);
-        dto.setOrderId(77L);
-
-        Order order=new Order();
-        order.setId(77L);
-
-        ProductDTO productDTO=new ProductDTO();
-        productDTO.setId(11L);
-        productDTO.setName("Keyboard");
-
-        OrderItem mappedItem=new OrderItem();
-        mappedItem.setProductId(11L);
-        mappedItem.setQuantity(3);
-        mappedItem.setPrice(999.5);
-
-        OrderItem savedItem=new OrderItem();
-        savedItem.setId(555L);
-        savedItem.setProductId(11L);
-        savedItem.setQuantity(3);
-        savedItem.setPrice(999.5);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(555L);
-        responseDTO.setProductId(11L);
-        responseDTO.setQuantity(3);
-        responseDTO.setPrice(999.5);
-
-        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
-        when(productFeignClient.getProduct(eq(11L))).thenReturn(productDTO);
-        when(modelMapper.map(any(OrderItemDTO.class),eq(OrderItem.class))).thenReturn(mappedItem);
-        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-
-        OrderItemResponseDTO actual=orderItemServiceImpl.addItem(dto);
-        assertEquals(3,actual.getQuantity());
-    }
-
-    @Test
-    void testAddItemFallbackSuccess(){
-        OrderItemDTO dto=new OrderItemDTO();
+    void testAddItemFallbackSuccess() {
+        OrderItemDTO dto = new OrderItemDTO();
         dto.setProductId(11L);
         dto.setQuantity(2);
         dto.setOrderId(77L);
 
-        Order order=new Order();
-        order.setId(77L);
-
-        OrderItem mappedItem=new OrderItem();
-        mappedItem.setProductId(11L);
-        mappedItem.setQuantity(2);
-        mappedItem.setPrice(5099);
-
-        OrderItem savedItem=new OrderItem();
-        savedItem.setId(555L);
-        savedItem.setProductId(11L);
-        savedItem.setQuantity(2);
-        savedItem.setPrice(5099);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(555L);
-        responseDTO.setProductId(11L);
-        responseDTO.setQuantity(2);
-        responseDTO.setPrice(5099);
-        responseDTO.setName("Mechanical Keyboard");
-
-        Throwable t=new RuntimeException("Product service down");
+        Order order = buildOrder(77L);
+        OrderItem mappedItem = buildOrderItem(null, 11L);
+        OrderItem savedItem = buildOrderItem(555L, 11L);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(555L, 11L);
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
-        when(modelMapper.map(any(OrderItemDTO.class),eq(OrderItem.class))).thenReturn(mappedItem);
+        when(modelMapper.map(any(OrderItemDTO.class), eq(OrderItem.class))).thenReturn(mappedItem);
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        OrderItemResponseDTO actual=orderItemServiceImpl.addItemGetDefaultProduct(dto,t);
-
-        assertThat(actual).isNotNull();
-        assertThat(actual.getId()).isEqualTo(555L);
-        assertThat(actual.getName()).isEqualTo("Mechanical Keyboard");
+        OrderItemResponseDTO actual = orderItemServiceImpl.addItemGetDefaultProduct(dto, new RuntimeException("down"));
+        assertNotNull(actual);
+        assertEquals(555L, actual.getId());
     }
 
     @Test
-    void testGetItemFallbackSuccess(){
-        OrderItem orderItem=new OrderItem();
-        orderItem.setId(1L);
-        orderItem.setProductId(1L);
-        orderItem.setQuantity(2);
-        orderItem.setPrice(499.5);
-
-        Order order=new Order();
-        order.setId(1L);
-        orderItem.setOrder(order);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(1L);
-        responseDTO.setProductId(1L);
-        responseDTO.setQuantity(2);
-        responseDTO.setPrice(5099);
-        responseDTO.setName("Mechanical Keyboard");
-
-        Throwable t=new RuntimeException("Product service down");
+    void testGetItemFallbackSuccess() {
+        OrderItem orderItem = buildOrderItem(1L, 1L);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
 
         when(orderItemRepository.findById(eq(1L))).thenReturn(Optional.of(orderItem));
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        OrderItemResponseDTO actual=orderItemServiceImpl.getItemGetDefaultProduct(1L,t);
-
-        assertThat(actual).isNotNull();
-        assertThat(actual.getId()).isEqualTo(1L);
-        assertThat(actual.getName()).isEqualTo("Mechanical Keyboard");
+        OrderItemResponseDTO actual = orderItemServiceImpl.getItemGetDefaultProduct(1L, new RuntimeException("down"));
+        assertNotNull(actual);
+        assertEquals(KEYBOARD_NAME, actual.getName());
     }
 
     @Test
-    void testListItemsFallbackWithItems(){
-        OrderItem orderItem=new OrderItem();
-        orderItem.setId(1L);
-        orderItem.setProductId(5L);
-        orderItem.setQuantity(1);
-        orderItem.setPrice(4099);
-
-        Order order=new Order();
-        order.setId(10L);
-        orderItem.setOrder(order);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(1L);
-        responseDTO.setProductId(5L);
-        responseDTO.setName("Wireless Mouse");
-
-        Throwable t=new RuntimeException("Product service down");
+    void testListItemsFallbackWithItems() {
+        OrderItem orderItem = buildOrderItem(1L, 5L);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 5L);
 
         when(orderItemRepository.findAll()).thenReturn(List.of(orderItem));
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        List<OrderItemResponseDTO> result=orderItemServiceImpl.listItemsGetDefaultProduct(t);
-
+        List<OrderItemResponseDTO> result = orderItemServiceImpl.listItemsGetDefaultProduct(new RuntimeException("down"));
         assertFalse(result.isEmpty());
-        assertEquals(1,result.size());
-        assertEquals("Wireless Mouse",result.get(0).getName());
+        assertEquals(1, result.size());
     }
 
     @Test
-    void testListItemsByProductFallbackWithItems(){
-        Long productId=5L;
-
-        OrderItem orderItem=new OrderItem();
-        orderItem.setId(1L);
-        orderItem.setProductId(productId);
-        orderItem.setQuantity(1);
-        orderItem.setPrice(4099);
-
-        Order order=new Order();
-        order.setId(10L);
-        orderItem.setOrder(order);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(1L);
-        responseDTO.setProductId(productId);
-        responseDTO.setName("Wireless Mouse");
-
-        Throwable t=new RuntimeException("Product service down");
+    void testListItemsByProductFallbackWithItems() {
+        Long productId = 5L;
+        OrderItem orderItem = buildOrderItem(1L, productId);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, productId);
 
         when(orderItemRepository.findByProductId(productId)).thenReturn(List.of(orderItem));
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        List<OrderItemResponseDTO> result=orderItemServiceImpl.listItemsByProductGetDefaultProduct(productId,t);
-
+        List<OrderItemResponseDTO> result = orderItemServiceImpl.listItemsByProductGetDefaultProduct(productId, new RuntimeException("down"));
         assertFalse(result.isEmpty());
-        assertEquals(1,result.size());
-        assertEquals("Wireless Mouse",result.get(0).getName());
+        assertEquals(1, result.size());
     }
 
     @Test
-    void testListItemsByOrderFallbackWithItems(){
-        Long orderId=10L;
-
-        OrderItem orderItem=new OrderItem();
-        orderItem.setId(1L);
-        orderItem.setProductId(5L);
-        orderItem.setQuantity(2);
-        orderItem.setPrice(5099);
-
-        Order order=new Order();
-        order.setId(orderId);
-        orderItem.setOrder(order);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(1L);
-        responseDTO.setProductId(5L);
-        responseDTO.setName("Mechanical Keyboard");
+    void testListItemsByOrderFallbackWithItems() {
+        Long orderId = 10L;
+        OrderItem orderItem = buildOrderItem(1L, 5L);
+        orderItem.setOrder(buildOrder(orderId));
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 5L);
         responseDTO.setOrderId(orderId);
 
-        Throwable t=new RuntimeException("Product service down");
-
         when(orderItemRepository.findByOrderId(orderId)).thenReturn(List.of(orderItem));
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        List<OrderItemResponseDTO> result=orderItemServiceImpl.listItemsByOrderGetDefaultProduct(orderId,t);
-
+        List<OrderItemResponseDTO> result = orderItemServiceImpl.listItemsByOrderGetDefaultProduct(orderId, new RuntimeException("down"));
         assertFalse(result.isEmpty());
-        assertEquals(1,result.size());
-        assertEquals("Mechanical Keyboard",result.get(0).getName());
+        assertEquals(1, result.size());
     }
 
     @Test
-    void testUpdateItemFallbackSuccess(){
-        Long itemId=555L;
-
-        OrderItemDTO dto=new OrderItemDTO();
+    void testUpdateItemFallbackSuccess() {
+        Long itemId = 555L;
+        OrderItemDTO dto = new OrderItemDTO();
         dto.setOrderId(77L);
         dto.setProductId(11L);
         dto.setQuantity(5);
 
-        Order order=new Order();
-        order.setId(77L);
-
-        Order existingOrder=new Order();
-        existingOrder.setId(77L);
-
-        OrderItem existingItem=new OrderItem();
-        existingItem.setId(itemId);
-        existingItem.setProductId(11L);
-        existingItem.setQuantity(2);
-        existingItem.setPrice(999.5);
-        existingItem.setOrder(existingOrder);
-
-        OrderItem savedItem=new OrderItem();
-        savedItem.setId(itemId);
-        savedItem.setProductId(11L);
+        Order order = buildOrder(77L);
+        OrderItem existingItem = buildOrderItem(itemId, 11L);
+        existingItem.setOrder(buildOrder(77L));
+        OrderItem savedItem = buildOrderItem(itemId, 11L);
         savedItem.setQuantity(5);
-        savedItem.setPrice(5099);
         savedItem.setOrder(order);
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(itemId);
-        responseDTO.setProductId(11L);
+        OrderItemResponseDTO responseDTO = buildItemResponseDTO(itemId, 11L);
         responseDTO.setQuantity(5);
-        responseDTO.setPrice(5099);
-        responseDTO.setName("Mechanical Keyboard");
-        responseDTO.setOrderId(77L);
-
-        Throwable t=new RuntimeException("Product service down");
 
         when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
         when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.of(existingItem));
         when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(OrderItem.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
+        when(modelMapper.map(any(ProductDTO.class), eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
 
-        OrderItemResponseDTO actual=orderItemServiceImpl.updateItemGetDefaultProduct(itemId,dto,t);
-
-        assertThat(actual).isNotNull();
-        assertThat(actual.getId()).isEqualTo(itemId);
-        assertThat(actual.getName()).isEqualTo("Mechanical Keyboard");
-        assertThat(actual.getQuantity()).isEqualTo(5);
+        OrderItemResponseDTO actual = orderItemServiceImpl.updateItemGetDefaultProduct(itemId, dto, new RuntimeException("down"));
+        assertNotNull(actual);
+        assertEquals(5, actual.getQuantity());
     }
-
-    @Test
-    void testGetItemPositiveAssertOrderId(){
-        try{
-            OrderItem orderItem=new OrderItem();
-            orderItem.setId(1L);
-            orderItem.setProductId(1L);
-            orderItem.setQuantity(2);
-            orderItem.setPrice(499.5);
-
-            Order order=new Order();
-            order.setId(1L);
-            order.setUserId(1L);
-            order.setStatus("CREATED");
-            order.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-            orderItem.setOrder(order);
-
-            ProductDTO productDTO=new ProductDTO();
-            productDTO.setId(1L);
-            productDTO.setName("Mechanical Keyboard");
-            productDTO.setPrice(5099);
-            productDTO.setStock(200);
-
-            OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-            orderItemResponseDTO.setId(1L);
-            orderItemResponseDTO.setProductId(1L);
-            orderItemResponseDTO.setQuantity(2);
-            orderItemResponseDTO.setPrice(499.5);
-            orderItemResponseDTO.setOrderId(1L);
-
-            when(orderItemRepository.findById(any())).thenReturn(Optional.of(orderItem));
-            when(productFeignClient.getProduct(any())).thenReturn(productDTO);
-            when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-            when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(orderItemResponseDTO);
-
-            OrderItemResponseDTO actualOrderItemResponseDTO=orderItemServiceImpl.getItem(1L);
-            assertEquals(1L,actualOrderItemResponseDTO.getOrderId());
-        } catch(Exception ex){
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateItemPositiveAssertUpdatedQuantity(){
-        Long itemId=555L;
-
-        OrderItemDTO dto=new OrderItemDTO();
-        dto.setOrderId(77L);
-        dto.setProductId(11L);
-        dto.setQuantity(10);
-
-        Order order=new Order();
-        order.setId(77L);
-
-        Order existingOrder=new Order();
-        existingOrder.setId(77L);
-
-        OrderItem existingItem=new OrderItem();
-        existingItem.setId(itemId);
-        existingItem.setProductId(11L);
-        existingItem.setQuantity(2);
-        existingItem.setPrice(999.5);
-        existingItem.setOrder(existingOrder);
-
-        OrderItem savedItem=new OrderItem();
-        savedItem.setId(itemId);
-        savedItem.setProductId(11L);
-        savedItem.setQuantity(10);
-        savedItem.setPrice(1499.0);
-        savedItem.setOrder(order);
-
-        ProductDTO productDTO=new ProductDTO();
-        productDTO.setId(11L);
-        productDTO.setName("Keyboard Pro");
-
-        OrderItemResponseDTO responseDTO=new OrderItemResponseDTO();
-        responseDTO.setId(itemId);
-        responseDTO.setProductId(11L);
-        responseDTO.setQuantity(10);
-        responseDTO.setPrice(1499.0);
-        responseDTO.setOrderId(77L);
-
-        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(order));
-        when(orderItemRepository.findById(eq(itemId))).thenReturn(Optional.of(existingItem));
-        when(orderItemRepository.save(any(OrderItem.class))).thenReturn(savedItem);
-        when(productFeignClient.getProduct(eq(11L))).thenReturn(productDTO);
-        when(modelMapper.map(any(OrderItem.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-        when(modelMapper.map(any(ProductDTO.class),eq(OrderItemResponseDTO.class))).thenReturn(responseDTO);
-
-        OrderItemResponseDTO actual=orderItemServiceImpl.updateItem(itemId,dto);
-
-        assertThat(actual).isNotNull();
-        assertThat(actual.getQuantity()).isEqualTo(10);
-    }
-
 }

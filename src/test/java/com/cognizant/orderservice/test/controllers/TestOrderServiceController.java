@@ -25,15 +25,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes= OrderServiceApplication.class)
+@SpringBootTest(classes = OrderServiceApplication.class)
 @ActiveProfiles("test")
-public class TestOrderServiceController {
+class TestOrderServiceController {
+
     @Mock
     private OrderService orderService;
     @Mock
@@ -44,448 +43,278 @@ public class TestOrderServiceController {
     @Autowired
     private LocalValidatorFactoryBean validator;
 
+    private static final String USER_NAME = "Aman";
+    private static final String USER_EMAIL = "Aman@example.com";
+    private static final String KEYBOARD_NAME = "Mechanical Keyboard";
+    private static final String KEYBOARD_DESC = "RGB backlit mechanical keyboard with blue switches.";
+    private static final LocalDateTime CREATED_AT = LocalDateTime.of(2026, 2, 1, 10, 0, 0);
+
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         MockitoAnnotations.initMocks(this);
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {}
 
+    // ── Builders ─────────────────────────────────────────────────────────────────
+
+    private OrderResponseDTO buildOrderResponse(String status) {
+        OrderResponseDTO dto = new OrderResponseDTO();
+        dto.setId(1L);
+        dto.setUserId(1L);
+        dto.setStatus(status);
+        dto.setCreatedAt(CREATED_AT);
+        dto.setUserName(USER_NAME);
+        dto.setEmail(USER_EMAIL);
+        return dto;
     }
+
+    private List<OrderResponseDTO> buildOrderResponseList(String status) {
+        List<OrderResponseDTO> list = new ArrayList<>();
+        list.add(buildOrderResponse(status));
+        return list;
+    }
+
+    private OrderItemResponseDTO buildItemResponse() {
+        OrderItemResponseDTO dto = new OrderItemResponseDTO();
+        dto.setId(1L);
+        dto.setProductId(1L);
+        dto.setQuantity(2);
+        dto.setPrice(499.5);
+        dto.setOrderId(1L);
+        dto.setName(KEYBOARD_NAME);
+        dto.setDescription(KEYBOARD_DESC);
+        dto.setStock(200);
+        return dto;
+    }
+
+    private List<OrderItemResponseDTO> buildItemResponseList() {
+        List<OrderItemResponseDTO> list = new ArrayList<>();
+        list.add(buildItemResponse());
+        return list;
+    }
+
+    private OrderDTO buildOrderDTO() {
+        OrderDTO dto = new OrderDTO();
+        dto.setId(1L);
+        dto.setUserId(1L);
+        dto.setStatus("CREATED");
+        dto.setCreatedAt(CREATED_AT);
+        return dto;
+    }
+
+    private OrderItemDTO buildItemDTO() {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setId(1L);
+        dto.setProductId(1L);
+        dto.setQuantity(2);
+        dto.setOrderId(1L);
+        return dto;
+    }
+
+    // ── listOrders ────────────────────────────────────────────────────────────────
 
     @Test
     void testListOrdersPositiveAssertReturnValue() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        orderResponseDTOList.add(orderResponseDTO);
-
-        try {
-            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
-            List<OrderResponseDTO> actualOrderResponseDTOList=responseEntity.getBody();
-            assertTrue(actualOrderResponseDTOList.size()>0);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.listOrders()).thenReturn(buildOrderResponseList("CREATED"));
+        assertFalse(orderServiceController.listOrders().getBody().isEmpty());
     }
 
     @Test
     void testListOrdersPositiveAssertStatusCode() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
+        when(orderService.listOrders()).thenReturn(buildOrderResponseList("CREATED"));
+        assertEquals(200, orderServiceController.listOrders().getStatusCode().value());
+    }
 
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
+    @Test
+    void testListOrdersPositiveAssertListSize() {
+        List<OrderResponseDTO> list = new ArrayList<>();
+        list.add(buildOrderResponse("CREATED"));
+        list.add(buildOrderResponse("PAID"));
+        when(orderService.listOrders()).thenReturn(list);
+        assertEquals(2, orderServiceController.listOrders().getBody().size());
+    }
 
-        orderResponseDTOList.add(orderResponseDTO);
-
-        try {
-            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testListOrdersPositiveAssertEmail() {
+        when(orderService.listOrders()).thenReturn(buildOrderResponseList("CREATED"));
+        assertEquals(USER_EMAIL, orderServiceController.listOrders().getBody().get(0).getEmail());
     }
 
     @Test
     void testListOrdersNegativeAssertReturnValue() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-        try {
-            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.listOrders()).thenReturn(new ArrayList<>());
+        assertNull(orderServiceController.listOrders().getBody());
     }
 
     @Test
     void testListOrdersNegativeAssertStatusCode() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-        try {
-            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.listOrders()).thenReturn(new ArrayList<>());
+        assertEquals(400, orderServiceController.listOrders().getStatusCode().value());
     }
+
+    // ── listOrdersByUser ──────────────────────────────────────────────────────────
 
     @Test
     void testListOrdersByUserPositiveAssertReturnValue() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        orderResponseDTOList.add(orderResponseDTO);
-
-        try {
-            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
-            List<OrderResponseDTO> actualOrderResponseDTOList=responseEntity.getBody();
-            assertTrue(actualOrderResponseDTOList.size()>0);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.listOrdersByUser(any())).thenReturn(buildOrderResponseList("CREATED"));
+        assertFalse(orderServiceController.listOrdersByUser(1L).getBody().isEmpty());
     }
 
     @Test
     void testListOrdersByUserPositiveAssertStatusCode() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
+        when(orderService.listOrdersByUser(any())).thenReturn(buildOrderResponseList("CREATED"));
+        assertEquals(200, orderServiceController.listOrdersByUser(1L).getStatusCode().value());
+    }
 
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
+    @Test
+    void testListOrdersByUserPositiveAssertListSize() {
+        List<OrderResponseDTO> list = new ArrayList<>();
+        list.add(buildOrderResponse("CREATED"));
+        list.add(buildOrderResponse("PAID"));
+        when(orderService.listOrdersByUser(any())).thenReturn(list);
+        assertEquals(2, orderServiceController.listOrdersByUser(1L).getBody().size());
+    }
 
-        orderResponseDTOList.add(orderResponseDTO);
-
-        try {
-            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testListOrdersByUserPositiveAssertEmail() {
+        when(orderService.listOrdersByUser(any())).thenReturn(buildOrderResponseList("CREATED"));
+        assertEquals(USER_EMAIL, orderServiceController.listOrdersByUser(1L).getBody().get(0).getEmail());
     }
 
     @Test
     void testListOrdersByUserNegativeAssertReturnValue() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-        try {
-            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.listOrdersByUser(any())).thenReturn(new ArrayList<>());
+        assertNull(orderServiceController.listOrdersByUser(1L).getBody());
     }
 
     @Test
     void testListOrdersByUserNegativeAssertStatusCode() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-        try {
-            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.listOrdersByUser(any())).thenReturn(new ArrayList<>());
+        assertEquals(400, orderServiceController.listOrdersByUser(1L).getStatusCode().value());
     }
+
+    // ── getOrder ──────────────────────────────────────────────────────────────────
 
     @Test
     void testGetOrderPositiveAssertReturnValue() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            OrderResponseDTO actualOrderResponseDTO=responseEntity.getBody();
-            assertNotNull(actualOrderResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.getOrder(any())).thenReturn(buildOrderResponse("CREATED"));
+        assertNotNull(orderServiceController.getOrder(1L).getBody());
     }
 
     @Test
     void testGetOrderPositiveAssertStatusCode() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
+        when(orderService.getOrder(any())).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(200, orderServiceController.getOrder(1L).getStatusCode().value());
+    }
 
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testGetOrderPositiveAssertStatus() {
+        when(orderService.getOrder(any())).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals("CREATED", orderServiceController.getOrder(1L).getBody().getStatus());
+    }
+
+    @Test
+    void testGetOrderPositiveAssertUserId() {
+        when(orderService.getOrder(any())).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(1L, orderServiceController.getOrder(1L).getBody().getUserId());
+    }
+
+    @Test
+    void testGetOrderPositiveAssertEmail() {
+        when(orderService.getOrder(any())).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(USER_EMAIL, orderServiceController.getOrder(1L).getBody().getEmail());
+    }
+
+    @Test
+    void testGetOrderPositiveAssertUserName() {
+        when(orderService.getOrder(any())).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(USER_NAME, orderServiceController.getOrder(1L).getBody().getUserName());
     }
 
     @Test
     void testGetOrderNegativeAssertReturnValue() {
-        OrderResponseDTO orderResponseDTO=null;
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.getOrder(any())).thenReturn(null);
+        assertNull(orderServiceController.getOrder(1L).getBody());
     }
 
     @Test
     void testGetOrderNegativeAssertStatusCode() {
-        OrderResponseDTO orderResponseDTO=null;
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.getOrder(any())).thenReturn(null);
+        assertEquals(400, orderServiceController.getOrder(1L).getStatusCode().value());
     }
 
-    @Test
-    void testDeleteOrderPositiveAssertReturnValue() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.deleteOrder(any())).thenReturn("Order deleted with Id: " + orderResponseDTO.getId());
-            ResponseEntity<String> responseEntity=orderServiceController.deleteOrder(1L);
-            String result=responseEntity.getBody();
-            assertNotNull(result);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteOrderPositiveAssertStatusCode() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.deleteOrder(any())).thenReturn("Order deleted with Id: " + orderResponseDTO.getId());
-            ResponseEntity<String> responseEntity=orderServiceController.deleteOrder(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteOrderNegativeAssertReturnValue() {
-        String result=null;
-        try {
-            when(orderService.deleteOrder(any())).thenReturn(result);
-            ResponseEntity<String> responseEntity=orderServiceController.deleteOrder(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteOrderNegativeAssertStatusCode() {
-        String result=null;
-        try {
-            when(orderService.deleteOrder(any())).thenReturn(result);
-            ResponseEntity<String> responseEntity=orderServiceController.deleteOrder(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
+    // ── createOrder ───────────────────────────────────────────────────────────────
 
     @Test
     void testCreateOrderWhenOrderIsValid() {
-        OrderDTO orderDTO=new OrderDTO();
-        orderDTO.setId(1L);
-        orderDTO.setUserId(1L);
-        orderDTO.setStatus("CREATED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-        validator.validate(orderDTO).stream().forEach((constraintViolation)->assertNull(constraintViolation));
+        validator.validate(buildOrderDTO()).forEach(v -> assertNull(v));
     }
 
     @Test
     void testCreateOrderPositiveAssertReturnValue() {
-        OrderDTO orderDTO=new OrderDTO();
-        orderDTO.setId(1L);
-        orderDTO.setUserId(1L);
-        orderDTO.setStatus("CREATED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            OrderResponseDTO actualOrderResponseDTO=responseEntity.getBody();
-            assertNotNull(actualOrderResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(buildOrderResponse("CREATED"));
+        assertNotNull(orderServiceController.createOrder(buildOrderDTO()).getBody());
     }
 
     @Test
     void testCreateOrderPositiveAssertStatusCode() {
-        OrderDTO orderDTO=new OrderDTO();
-        orderDTO.setId(1L);
-        orderDTO.setUserId(1L);
-        orderDTO.setStatus("CREATED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(201, orderServiceController.createOrder(buildOrderDTO()).getStatusCode().value());
+    }
 
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
+    @Test
+    void testCreateOrderPositiveAssertStatus() {
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals("CREATED", orderServiceController.createOrder(buildOrderDTO()).getBody().getStatus());
+    }
 
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            assertEquals(201,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testCreateOrderPositiveAssertEmail() {
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(USER_EMAIL, orderServiceController.createOrder(buildOrderDTO()).getBody().getEmail());
+    }
+
+    @Test
+    void testCreateOrderPositiveAssertUserName() {
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(buildOrderResponse("CREATED"));
+        assertEquals(USER_NAME, orderServiceController.createOrder(buildOrderDTO()).getBody().getUserName());
     }
 
     @Test
     void testCreateOrderWhenOrderIsNotValid() {
-        OrderDTO orderDTO=new OrderDTO();
+        OrderDTO orderDTO = new OrderDTO();
         orderDTO.setId(1L);
         orderDTO.setUserId(-1L);
-        orderDTO.setStatus("CREATEDPAIDSHIPPEDCANCELLED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-        validator.validate(orderDTO).stream().forEach((constraintViolation)->assertNotNull(constraintViolation));
+        orderDTO.setStatus("INVALID_STATUS");
+        orderDTO.setCreatedAt(CREATED_AT);
+        validator.validate(orderDTO).forEach(v -> assertNotNull(v));
     }
 
     @Test
     void testCreateOrderNegativeAssertReturnValue() {
-        OrderDTO orderDTO=null;
-        OrderResponseDTO orderResponseDTO=null;
-
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            OrderResponseDTO actualOrderResponseDTO=responseEntity.getBody();
-            assertNull(actualOrderResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(null);
+        assertNull(orderServiceController.createOrder(null).getBody());
     }
 
     @Test
     void testCreateOrderNegativeAssertStatusCode() {
-        OrderDTO orderDTO=null;
-        OrderResponseDTO orderResponseDTO=null;
+        when(orderService.createOrder(any(OrderDTO.class))).thenReturn(null);
+        assertEquals(400, orderServiceController.createOrder(null).getStatusCode().value());
+    }
 
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    // ── updateOrderStatus ─────────────────────────────────────────────────────────
+
+    @Test
+    void testUpdateOrderStatusWhenOrderStatusIsValid() {
+        assertTrue(validator.validateValue(OrderDTO.class, "status", "SHIPPED").isEmpty());
     }
 
     @Test
-    void testUpdateUpdateOrderStatusWhenOrderStatusIsValid() {
-        // Arrange
-        String status = "SHIPPED";
-
-        // Act: validate only the "status" property on OrderDTO class (no instance created)
-        var violations = validator.validateValue(OrderDTO.class, "status", status);
-
-        // Assert
-        assertTrue(violations.isEmpty(), "Expected no violations for a valid status");
-    }
-
-    @Test
-    void testUpdateUpdateOrderStatusPositiveAssertReturnValue() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("SHIPPED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"SHIPPED");
-            OrderResponseDTO actualOrderResponseDTO=responseEntity.getBody();
-            assertNotNull(actualOrderResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateUpdateOrderStatusPositiveAssertStatusCode() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("SHIPPED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"SHIPPED");
-            assertEquals(202,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateUpdateOrderStatusWhenOrderStatusIsNotValid() {
-        // Arrange
-        String status = "CREATEDPAIDSHIPPEDCANCELLED"; // invalid, does not match the alternation
-
-        // Act
-        var violations = validator.validateValue(OrderDTO.class, "status", status);
-
-        // Assert
-        assertFalse(violations.isEmpty(), "Expected violations for an invalid status");
-        // (Optional) verify which property failed and the message from your DTO
+    void testUpdateOrderStatusWhenOrderStatusIsNotValid() {
+        var violations = validator.validateValue(OrderDTO.class, "status", "INVALID_STATUS");
+        assertFalse(violations.isEmpty());
         violations.forEach(v -> {
             assertEquals("status", v.getPropertyPath().toString());
             assertEquals("Status must be one of: CREATED, PAID, SHIPPED, CANCELLED", v.getMessage());
@@ -493,1192 +322,367 @@ public class TestOrderServiceController {
     }
 
     @Test
-    void testUpdateUpdateOrderStatusNegativeAssertReturnValue() {
-        OrderResponseDTO orderResponseDTO=null;
-
-        try {
-            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"CREATEDPAIDSHIPPEDCANCELLED");
-            OrderResponseDTO actualOrderResponseDTO=responseEntity.getBody();
-            assertNull(actualOrderResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    void testUpdateOrderStatusPositiveAssertReturnValue() {
+        when(orderService.updateOrderStatus(any(), anyString())).thenReturn(buildOrderResponse("SHIPPED"));
+        assertNotNull(orderServiceController.updateOrderStatus(1L, "SHIPPED").getBody());
     }
 
     @Test
-    void testUpdateUpdateOrderStatusNegativeAssertStatusCode() {
-        OrderResponseDTO orderResponseDTO=null;
-
-        try {
-            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"CREATEDPAIDSHIPPEDCANCELLED");
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsPositiveAssertReturnValue() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        orderItemResponseDTOList.add(orderItemResponseDTO);
-
-        try {
-            when(orderItemService.listItems()).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItems();
-            List<OrderItemResponseDTO> actualOrderItemResponseDTOList=responseEntity.getBody();
-            assertTrue(actualOrderItemResponseDTOList.size()>0);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsPositiveAssertStatusCode() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        orderItemResponseDTOList.add(orderItemResponseDTO);
-
-        try {
-            when(orderItemService.listItems()).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItems();
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsNegativeAssertReturnValue() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-        try {
-            when(orderItemService.listItems()).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItems();
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsNegativeAssertStatusCode() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-        try {
-            when(orderItemService.listItems()).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItems();
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByProductPositiveAssertReturnValue() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        orderItemResponseDTOList.add(orderItemResponseDTO);
-
-        try {
-            when(orderItemService.listItemsByProduct(any())).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByProduct(1L);
-            List<OrderItemResponseDTO> actualOrderItemResponseDTOList=responseEntity.getBody();
-            assertTrue(actualOrderItemResponseDTOList.size()>0);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByProductPositiveAssertStatusCode() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        orderItemResponseDTOList.add(orderItemResponseDTO);
-
-        try {
-            when(orderItemService.listItemsByProduct(any())).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByProduct(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByProductNegativeAssertReturnValue() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-        try {
-            when(orderItemService.listItemsByProduct(any())).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByProduct(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByProductNegativeAssertStatusCode() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-        try {
-            when(orderItemService.listItemsByProduct(any())).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByProduct(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByOrderPositiveAssertReturnValue() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        orderItemResponseDTOList.add(orderItemResponseDTO);
-
-        try {
-            when(orderItemService.listItemsByOrder(1l)).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByOrder(1L);
-            List<OrderItemResponseDTO> actualOrderItemResponseDTOList=responseEntity.getBody();
-            assertTrue(actualOrderItemResponseDTOList.size()>0);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByOrderPositiveAssertStatusCode() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        orderItemResponseDTOList.add(orderItemResponseDTO);
-
-        try {
-            when(orderItemService.listItemsByOrder(1l)).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByOrder(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByOrderNegativeAssertReturnValue() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-        try {
-            when(orderItemService.listItemsByOrder(1l)).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByOrder(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListItemsByOrderNegativeAssertStatusCode() {
-        List<OrderItemResponseDTO> orderItemResponseDTOList=new ArrayList<>();
-        try {
-            when(orderItemService.listItemsByOrder(1l)).thenReturn(orderItemResponseDTOList);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByOrder(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemPositiveAssertReturnValue() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            OrderItemResponseDTO actualOrderItemResponseDTO=responseEntity.getBody();
-            assertNotNull(actualOrderItemResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemPositiveAssertStatusCode() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemNegativeAssertReturnValue() {
-        OrderItemResponseDTO orderItemResponseDTO=null;
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemNegativeAssertStatusCode() {
-        OrderItemResponseDTO orderItemResponseDTO=null;
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteItemPositiveAssertReturnValue() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.deleteItem(any())).thenReturn("Item deleted with Id: " + orderItemResponseDTO.getId());
-            ResponseEntity<String> responseEntity=orderServiceController.deleteItem(1L);
-            String result=responseEntity.getBody();
-            assertNotNull(result);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteItemPositiveAssertStatusCode() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.deleteItem(any())).thenReturn("Item deleted with Id: " + orderItemResponseDTO.getId());
-            ResponseEntity<String> responseEntity=orderServiceController.deleteItem(1L);
-            assertEquals(200,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteItemNegativeAssertReturnValue() {
-        String result=null;
-        try {
-            when(orderItemService.deleteItem(any())).thenReturn(result);
-            ResponseEntity<String> responseEntity=orderServiceController.deleteItem(1L);
-            assertNull(responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteItemNegativeAssertStatusCode() {
-        String result=null;
-        try {
-            when(orderItemService.deleteItem(any())).thenReturn(result);
-            ResponseEntity<String> responseEntity=orderServiceController.deleteItem(1L);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testAddItemWhenItemIsValid() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-//        orderItemDTO.setPrice(499.5);
-        orderItemDTO.setOrderId(1L);
-
-        validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNull(constraintViolation));
-    }
-
-    @Test
-    void testAddItemPositiveAssertReturnValue() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-//        orderItemDTO.setPrice(499.5);
-        orderItemDTO.setOrderId(1L);
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
-            OrderItemResponseDTO actualOrderItemResponseDTO=responseEntity.getBody();
-            assertNotNull(actualOrderItemResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testAddItemPositiveAssertStatusCode() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-//        orderItemDTO.setPrice(499.5);
-        orderItemDTO.setOrderId(1L);
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
-            assertEquals(201,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testAddItemWhenOrderIsNotValid() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(-1L);
-        orderItemDTO.setQuantity(-2);
-//        orderItemDTO.setPrice(-499.5);
-        orderItemDTO.setOrderId(1L);
-
-        validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNotNull(constraintViolation));
-    }
-
-    @Test
-    void testAddItemNegativeAssertReturnValue() {
-        OrderItemDTO orderItemDTO=null;
-        OrderItemResponseDTO orderItemResponseDTO=null;
-
-        try {
-            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
-            OrderItemResponseDTO actualOrderItemResponseDTO=responseEntity.getBody();
-            assertNull(actualOrderItemResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testAddItemNegativeAssertStatusCode() {
-        OrderItemDTO orderItemDTO=null;
-        OrderItemResponseDTO orderItemResponseDTO=null;
-
-        try {
-            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateItemWhenItemIsValid() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-//        orderItemDTO.setPrice(499.5);
-        orderItemDTO.setOrderId(1L);
-
-        validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNull(constraintViolation));
-    }
-
-    @Test
-    void testUpdateItemPositiveAssertReturnValue() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-//        orderItemDTO.setPrice(499.5);
-        orderItemDTO.setOrderId(1L);
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1l,orderItemDTO);
-            OrderItemResponseDTO actualOrderItemResponseDTO=responseEntity.getBody();
-            assertNotNull(actualOrderItemResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateItemPositiveAssertStatusCode() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-//        orderItemDTO.setPrice(499.5);
-        orderItemDTO.setOrderId(1L);
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1l,orderItemDTO);
-            assertEquals(202,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateItemWhenOrderIsNotValid() {
-        OrderItemDTO orderItemDTO = new OrderItemDTO();
-        orderItemDTO.setId(1L);
-        orderItemDTO.setProductId(-1L);
-        orderItemDTO.setQuantity(-2);
-//        orderItemDTO.setPrice(-499.5);
-        orderItemDTO.setOrderId(1L);
-
-        validator.validate(orderItemDTO).stream().forEach((constraintViolation)->assertNotNull(constraintViolation));
-    }
-
-    @Test
-    void testUpdateItemNegativeAssertReturnValue() {
-        OrderItemDTO orderItemDTO=null;
-        OrderItemResponseDTO orderItemResponseDTO=null;
-
-        try {
-            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1l,orderItemDTO);
-            OrderItemResponseDTO actualOrderItemResponseDTO=responseEntity.getBody();
-            assertNull(actualOrderItemResponseDTO);
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testUpdateItemNegativeAssertStatusCode() {
-        OrderItemDTO orderItemDTO=null;
-        OrderItemResponseDTO orderItemResponseDTO=null;
-
-        try {
-            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1l,orderItemDTO);
-            assertEquals(400,responseEntity.getStatusCode().value());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetOrderPositiveAssertStatus() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertEquals("CREATED",responseEntity.getBody().getStatus());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetOrderPositiveAssertUserId() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertEquals(1L,responseEntity.getBody().getUserId());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testCreateOrderPositiveAssertStatus() {
-        OrderDTO orderDTO=new OrderDTO();
-        orderDTO.setId(1L);
-        orderDTO.setUserId(1L);
-        orderDTO.setStatus("CREATED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            assertEquals("CREATED",responseEntity.getBody().getStatus());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListOrdersByUserPositiveAssertListSize() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-
-        OrderResponseDTO orderResponseDTO1=new OrderResponseDTO();
-        orderResponseDTO1.setId(1L);
-        orderResponseDTO1.setUserId(1L);
-        orderResponseDTO1.setStatus("CREATED");
-        orderResponseDTO1.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO1.setUserName("Aman");
-        orderResponseDTO1.setEmail("Aman@example.com");
-
-        OrderResponseDTO orderResponseDTO2=new OrderResponseDTO();
-        orderResponseDTO2.setId(2L);
-        orderResponseDTO2.setUserId(1L);
-        orderResponseDTO2.setStatus("PAID");
-        orderResponseDTO2.setCreatedAt(LocalDateTime.of(2026,3,1,10,0,0));
-        orderResponseDTO2.setUserName("Aman");
-        orderResponseDTO2.setEmail("Aman@example.com");
-
-        orderResponseDTOList.add(orderResponseDTO1);
-        orderResponseDTOList.add(orderResponseDTO2);
-
-        try {
-            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
-            assertEquals(2,responseEntity.getBody().size());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteOrderPositiveAssertMessage() {
-        try {
-            when(orderService.deleteOrder(any())).thenReturn("Order deleted with Id: 1");
-            ResponseEntity<String> responseEntity=orderServiceController.deleteOrder(1L);
-            assertEquals("Order deleted with Id: 1",responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemPositiveAssertProductId() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertEquals(1L,responseEntity.getBody().getProductId());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetItemPositiveAssertQuantity() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertEquals(2,responseEntity.getBody().getQuantity());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testDeleteItemPositiveAssertMessage() {
-        try {
-            when(orderItemService.deleteItem(any())).thenReturn("Item deleted with Id: 1");
-            ResponseEntity<String> responseEntity=orderServiceController.deleteItem(1L);
-            assertEquals("Item deleted with Id: 1",responseEntity.getBody());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    void testUpdateOrderStatusPositiveAssertStatusCode() {
+        when(orderService.updateOrderStatus(any(), anyString())).thenReturn(buildOrderResponse("SHIPPED"));
+        assertEquals(202, orderServiceController.updateOrderStatus(1L, "SHIPPED").getStatusCode().value());
     }
 
     @Test
     void testUpdateOrderStatusPositiveAssertUpdatedStatus() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("SHIPPED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"SHIPPED");
-            assertEquals("SHIPPED",responseEntity.getBody().getStatus());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListOrdersPositiveAssertListSize() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-
-        OrderResponseDTO dto1=new OrderResponseDTO();
-        dto1.setId(1L);
-        dto1.setUserId(1L);
-        dto1.setStatus("CREATED");
-        dto1.setUserName("Aman");
-        dto1.setEmail("Aman@example.com");
-
-        OrderResponseDTO dto2=new OrderResponseDTO();
-        dto2.setId(2L);
-        dto2.setUserId(2L);
-        dto2.setStatus("PAID");
-        dto2.setUserName("Suraj");
-        dto2.setEmail("Suraj@example.com");
-
-        orderResponseDTOList.add(dto1);
-        orderResponseDTOList.add(dto2);
-
-        try {
-            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
-            assertEquals(2,responseEntity.getBody().size());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testListOrdersPositiveAssertEmail() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        orderResponseDTOList.add(orderResponseDTO);
-
-        try {
-            when(orderService.listOrders()).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrders();
-            assertEquals("Aman@example.com",responseEntity.getBody().get(0).getEmail());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetOrderPositiveAssertEmail() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertEquals("Aman@example.com",responseEntity.getBody().getEmail());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testGetOrderPositiveAssertUserName() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.getOrder(any())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.getOrder(1L);
-            assertEquals("Aman",responseEntity.getBody().getUserName());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testCreateOrderPositiveAssertEmail() {
-        OrderDTO orderDTO=new OrderDTO();
-        orderDTO.setUserId(1L);
-        orderDTO.setStatus("CREATED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            assertEquals("Aman@example.com",responseEntity.getBody().getEmail());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
-    }
-
-    @Test
-    void testCreateOrderPositiveAssertUserName() {
-        OrderDTO orderDTO=new OrderDTO();
-        orderDTO.setUserId(1L);
-        orderDTO.setStatus("CREATED");
-        orderDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
-
-        try {
-            when(orderService.createOrder(any(OrderDTO.class))).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.createOrder(orderDTO);
-            assertEquals("Aman",responseEntity.getBody().getUserName());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        OrderResponseDTO responseDTO = buildOrderResponse("SHIPPED");
+        when(orderService.updateOrderStatus(any(), anyString())).thenReturn(responseDTO);
+        assertEquals("SHIPPED", orderServiceController.updateOrderStatus(1L, "SHIPPED").getBody().getStatus());
     }
 
     @Test
     void testUpdateOrderStatusPositiveAssertUserName() {
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("SHIPPED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
+        when(orderService.updateOrderStatus(any(), anyString())).thenReturn(buildOrderResponse("SHIPPED"));
+        assertEquals(USER_NAME, orderServiceController.updateOrderStatus(1L, "SHIPPED").getBody().getUserName());
+    }
 
-        try {
-            when(orderService.updateOrderStatus(any(),anyString())).thenReturn(orderResponseDTO);
-            ResponseEntity<OrderResponseDTO> responseEntity=orderServiceController.updateOrderStatus(1L,"SHIPPED");
-            assertEquals("Aman",responseEntity.getBody().getUserName());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testUpdateOrderStatusNegativeAssertReturnValue() {
+        when(orderService.updateOrderStatus(any(), anyString())).thenReturn(null);
+        assertNull(orderServiceController.updateOrderStatus(1L, "INVALID").getBody());
+    }
+
+    @Test
+    void testUpdateOrderStatusNegativeAssertStatusCode() {
+        when(orderService.updateOrderStatus(any(), anyString())).thenReturn(null);
+        assertEquals(400, orderServiceController.updateOrderStatus(1L, "INVALID").getStatusCode().value());
+    }
+
+    // ── deleteOrder ───────────────────────────────────────────────────────────────
+
+    @Test
+    void testDeleteOrderPositiveAssertReturnValue() {
+        when(orderService.deleteOrder(any())).thenReturn("Order deleted with Id: 1");
+        assertNotNull(orderServiceController.deleteOrder(1L).getBody());
+    }
+
+    @Test
+    void testDeleteOrderPositiveAssertStatusCode() {
+        when(orderService.deleteOrder(any())).thenReturn("Order deleted with Id: 1");
+        assertEquals(200, orderServiceController.deleteOrder(1L).getStatusCode().value());
+    }
+
+    @Test
+    void testDeleteOrderPositiveAssertMessage() {
+        when(orderService.deleteOrder(any())).thenReturn("Order deleted with Id: 1");
+        assertEquals("Order deleted with Id: 1", orderServiceController.deleteOrder(1L).getBody());
+    }
+
+    @Test
+    void testDeleteOrderNegativeAssertReturnValue() {
+        when(orderService.deleteOrder(any())).thenReturn(null);
+        assertNull(orderServiceController.deleteOrder(1L).getBody());
+    }
+
+    @Test
+    void testDeleteOrderNegativeAssertStatusCode() {
+        when(orderService.deleteOrder(any())).thenReturn(null);
+        assertEquals(400, orderServiceController.deleteOrder(1L).getStatusCode().value());
+    }
+
+    // ── listItems ─────────────────────────────────────────────────────────────────
+
+    @Test
+    void testListItemsPositiveAssertReturnValue() {
+        when(orderItemService.listItems()).thenReturn(buildItemResponseList());
+        assertFalse(orderServiceController.listItems().getBody().isEmpty());
+    }
+
+    @Test
+    void testListItemsPositiveAssertStatusCode() {
+        when(orderItemService.listItems()).thenReturn(buildItemResponseList());
+        assertEquals(200, orderServiceController.listItems().getStatusCode().value());
     }
 
     @Test
     void testListItemsPositiveAssertListSize() {
-        List<OrderItemResponseDTO> list=new ArrayList<>();
+        List<OrderItemResponseDTO> list = new ArrayList<>();
+        list.add(buildItemResponse());
+        list.add(buildItemResponse());
+        when(orderItemService.listItems()).thenReturn(list);
+        assertEquals(2, orderServiceController.listItems().getBody().size());
+    }
 
-        OrderItemResponseDTO item1=new OrderItemResponseDTO();
-        item1.setId(1L);
-        item1.setProductId(1L);
-        item1.setQuantity(2);
-        item1.setPrice(499.5);
-        item1.setOrderId(1L);
-        item1.setName("Mechanical Keyboard");
+    @Test
+    void testListItemsNegativeAssertReturnValue() {
+        when(orderItemService.listItems()).thenReturn(new ArrayList<>());
+        assertNull(orderServiceController.listItems().getBody());
+    }
 
-        OrderItemResponseDTO item2=new OrderItemResponseDTO();
-        item2.setId(2L);
-        item2.setProductId(2L);
-        item2.setQuantity(1);
-        item2.setPrice(299.0);
-        item2.setOrderId(1L);
-        item2.setName("Wireless Mouse");
+    @Test
+    void testListItemsNegativeAssertStatusCode() {
+        when(orderItemService.listItems()).thenReturn(new ArrayList<>());
+        assertEquals(400, orderServiceController.listItems().getStatusCode().value());
+    }
 
-        list.add(item1);
-        list.add(item2);
+    // ── listItemsByProduct ────────────────────────────────────────────────────────
 
-        try {
-            when(orderItemService.listItems()).thenReturn(list);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItems();
-            assertEquals(2,responseEntity.getBody().size());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testListItemsByProductPositiveAssertReturnValue() {
+        when(orderItemService.listItemsByProduct(any())).thenReturn(buildItemResponseList());
+        assertFalse(orderServiceController.listItemsByProduct(1L).getBody().isEmpty());
+    }
+
+    @Test
+    void testListItemsByProductPositiveAssertStatusCode() {
+        when(orderItemService.listItemsByProduct(any())).thenReturn(buildItemResponseList());
+        assertEquals(200, orderServiceController.listItemsByProduct(1L).getStatusCode().value());
     }
 
     @Test
     void testListItemsByProductPositiveAssertListSize() {
-        List<OrderItemResponseDTO> list=new ArrayList<>();
+        when(orderItemService.listItemsByProduct(any())).thenReturn(buildItemResponseList());
+        assertEquals(1, orderServiceController.listItemsByProduct(1L).getBody().size());
+    }
 
-        OrderItemResponseDTO item1=new OrderItemResponseDTO();
-        item1.setId(1L);
-        item1.setProductId(1L);
-        item1.setQuantity(2);
-        item1.setPrice(499.5);
-        item1.setOrderId(1L);
-        item1.setName("Mechanical Keyboard");
+    @Test
+    void testListItemsByProductNegativeAssertReturnValue() {
+        when(orderItemService.listItemsByProduct(any())).thenReturn(new ArrayList<>());
+        assertNull(orderServiceController.listItemsByProduct(1L).getBody());
+    }
 
-        list.add(item1);
+    @Test
+    void testListItemsByProductNegativeAssertStatusCode() {
+        when(orderItemService.listItemsByProduct(any())).thenReturn(new ArrayList<>());
+        assertEquals(400, orderServiceController.listItemsByProduct(1L).getStatusCode().value());
+    }
 
-        try {
-            when(orderItemService.listItemsByProduct(any())).thenReturn(list);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByProduct(1L);
-            assertEquals(1,responseEntity.getBody().size());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    // ── listItemsByOrder ──────────────────────────────────────────────────────────
+
+    @Test
+    void testListItemsByOrderPositiveAssertReturnValue() {
+        when(orderItemService.listItemsByOrder(1L)).thenReturn(buildItemResponseList());
+        assertFalse(orderServiceController.listItemsByOrder(1L).getBody().isEmpty());
+    }
+
+    @Test
+    void testListItemsByOrderPositiveAssertStatusCode() {
+        when(orderItemService.listItemsByOrder(1L)).thenReturn(buildItemResponseList());
+        assertEquals(200, orderServiceController.listItemsByOrder(1L).getStatusCode().value());
     }
 
     @Test
     void testListItemsByOrderPositiveAssertListSize() {
-        List<OrderItemResponseDTO> list=new ArrayList<>();
-
-        OrderItemResponseDTO item1=new OrderItemResponseDTO();
-        item1.setId(1L);
-        item1.setProductId(1L);
-        item1.setQuantity(2);
-        item1.setPrice(499.5);
-        item1.setOrderId(1L);
-        item1.setName("Mechanical Keyboard");
-
-        OrderItemResponseDTO item2=new OrderItemResponseDTO();
-        item2.setId(2L);
-        item2.setProductId(3L);
-        item2.setQuantity(3);
-        item2.setPrice(199.0);
-        item2.setOrderId(1L);
-        item2.setName("USB Hub");
-
-        list.add(item1);
-        list.add(item2);
-
-        try {
-            when(orderItemService.listItemsByOrder(1L)).thenReturn(list);
-            ResponseEntity<List<OrderItemResponseDTO>> responseEntity=orderServiceController.listItemsByOrder(1L);
-            assertEquals(2,responseEntity.getBody().size());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        List<OrderItemResponseDTO> list = new ArrayList<>();
+        list.add(buildItemResponse());
+        list.add(buildItemResponse());
+        when(orderItemService.listItemsByOrder(1L)).thenReturn(list);
+        assertEquals(2, orderServiceController.listItemsByOrder(1L).getBody().size());
     }
 
     @Test
-    void testAddItemPositiveAssertProductId() {
-        OrderItemDTO orderItemDTO=new OrderItemDTO();
-        orderItemDTO.setProductId(5L);
-        orderItemDTO.setQuantity(2);
-        orderItemDTO.setOrderId(1L);
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(5L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-
-        try {
-            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
-            assertEquals(5L,responseEntity.getBody().getProductId());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    void testListItemsByOrderNegativeAssertReturnValue() {
+        when(orderItemService.listItemsByOrder(1L)).thenReturn(new ArrayList<>());
+        assertNull(orderServiceController.listItemsByOrder(1L).getBody());
     }
 
     @Test
-    void testAddItemPositiveAssertPrice() {
-        OrderItemDTO orderItemDTO=new OrderItemDTO();
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(2);
-        orderItemDTO.setOrderId(1L);
+    void testListItemsByOrderNegativeAssertStatusCode() {
+        when(orderItemService.listItemsByOrder(1L)).thenReturn(new ArrayList<>());
+        assertEquals(400, orderServiceController.listItemsByOrder(1L).getStatusCode().value());
+    }
 
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
+    // ── getItem ───────────────────────────────────────────────────────────────────
 
-        try {
-            when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.addItem(orderItemDTO);
-            assertEquals(499.5,responseEntity.getBody().getPrice());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testGetItemPositiveAssertReturnValue() {
+        when(orderItemService.getItem(any())).thenReturn(buildItemResponse());
+        assertNotNull(orderServiceController.getItem(1L).getBody());
     }
 
     @Test
-    void testUpdateItemPositiveAssertProductId() {
-        OrderItemDTO orderItemDTO=new OrderItemDTO();
-        orderItemDTO.setProductId(7L);
-        orderItemDTO.setQuantity(3);
-        orderItemDTO.setOrderId(1L);
-
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(7L);
-        orderItemResponseDTO.setQuantity(3);
-        orderItemResponseDTO.setPrice(799.0);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Monitor Stand");
-
-        try {
-            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1L,orderItemDTO);
-            assertEquals(7L,responseEntity.getBody().getProductId());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    void testGetItemPositiveAssertStatusCode() {
+        when(orderItemService.getItem(any())).thenReturn(buildItemResponse());
+        assertEquals(200, orderServiceController.getItem(1L).getStatusCode().value());
     }
 
     @Test
-    void testUpdateItemPositiveAssertPrice() {
-        OrderItemDTO orderItemDTO=new OrderItemDTO();
-        orderItemDTO.setProductId(1L);
-        orderItemDTO.setQuantity(5);
-        orderItemDTO.setOrderId(1L);
+    void testGetItemPositiveAssertProductId() {
+        when(orderItemService.getItem(any())).thenReturn(buildItemResponse());
+        assertEquals(1L, orderServiceController.getItem(1L).getBody().getProductId());
+    }
 
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(5);
-        orderItemResponseDTO.setPrice(1499.0);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-
-        try {
-            when(orderItemService.updateItem(any(),any(OrderItemDTO.class))).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.updateItem(1L,orderItemDTO);
-            assertEquals(1499.0,responseEntity.getBody().getPrice());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testGetItemPositiveAssertQuantity() {
+        when(orderItemService.getItem(any())).thenReturn(buildItemResponse());
+        assertEquals(2, orderServiceController.getItem(1L).getBody().getQuantity());
     }
 
     @Test
     void testGetItemPositiveAssertPrice() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(1L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertEquals(499.5,responseEntity.getBody().getPrice());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        when(orderItemService.getItem(any())).thenReturn(buildItemResponse());
+        assertEquals(499.5, orderServiceController.getItem(1L).getBody().getPrice());
     }
 
     @Test
     void testGetItemPositiveAssertOrderId() {
-        OrderItemResponseDTO orderItemResponseDTO=new OrderItemResponseDTO();
-        orderItemResponseDTO.setId(1L);
-        orderItemResponseDTO.setProductId(1L);
-        orderItemResponseDTO.setQuantity(2);
-        orderItemResponseDTO.setPrice(499.5);
-        orderItemResponseDTO.setOrderId(5L);
-        orderItemResponseDTO.setName("Mechanical Keyboard");
-        orderItemResponseDTO.setDescription("RGB backlit mechanical keyboard with blue switches.");
-        orderItemResponseDTO.setStock(200);
-
-        try {
-            when(orderItemService.getItem(any())).thenReturn(orderItemResponseDTO);
-            ResponseEntity<OrderItemResponseDTO> responseEntity=orderServiceController.getItem(1L);
-            assertEquals(5L,responseEntity.getBody().getOrderId());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+        OrderItemResponseDTO dto = buildItemResponse();
+        dto.setOrderId(5L);
+        when(orderItemService.getItem(any())).thenReturn(dto);
+        assertEquals(5L, orderServiceController.getItem(1L).getBody().getOrderId());
     }
 
     @Test
-    void testListOrdersByUserPositiveAssertEmail() {
-        List<OrderResponseDTO> orderResponseDTOList=new ArrayList<>();
+    void testGetItemNegativeAssertReturnValue() {
+        when(orderItemService.getItem(any())).thenReturn(null);
+        assertNull(orderServiceController.getItem(1L).getBody());
+    }
 
-        OrderResponseDTO orderResponseDTO=new OrderResponseDTO();
-        orderResponseDTO.setId(1L);
-        orderResponseDTO.setUserId(1L);
-        orderResponseDTO.setStatus("CREATED");
-        orderResponseDTO.setCreatedAt(LocalDateTime.of(2026,2,1,10,0,0));
-        orderResponseDTO.setUserName("Aman");
-        orderResponseDTO.setEmail("Aman@example.com");
+    @Test
+    void testGetItemNegativeAssertStatusCode() {
+        when(orderItemService.getItem(any())).thenReturn(null);
+        assertEquals(400, orderServiceController.getItem(1L).getStatusCode().value());
+    }
 
-        orderResponseDTOList.add(orderResponseDTO);
+    // ── addItem ───────────────────────────────────────────────────────────────────
 
-        try {
-            when(orderService.listOrdersByUser(any())).thenReturn(orderResponseDTOList);
-            ResponseEntity<List<OrderResponseDTO>> responseEntity=orderServiceController.listOrdersByUser(1L);
-            assertEquals("Aman@example.com",responseEntity.getBody().get(0).getEmail());
-        }catch(Exception e) {
-            assertTrue(false);
-        }
+    @Test
+    void testAddItemWhenItemIsValid() {
+        validator.validate(buildItemDTO()).forEach(v -> assertNull(v));
+    }
+
+    @Test
+    void testAddItemPositiveAssertReturnValue() {
+        when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(buildItemResponse());
+        assertNotNull(orderServiceController.addItem(buildItemDTO()).getBody());
+    }
+
+    @Test
+    void testAddItemPositiveAssertStatusCode() {
+        when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(buildItemResponse());
+        assertEquals(201, orderServiceController.addItem(buildItemDTO()).getStatusCode().value());
+    }
+
+    @Test
+    void testAddItemPositiveAssertProductId() {
+        OrderItemResponseDTO dto = buildItemResponse();
+        dto.setProductId(5L);
+        when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(dto);
+        assertEquals(5L, orderServiceController.addItem(buildItemDTO()).getBody().getProductId());
+    }
+
+    @Test
+    void testAddItemPositiveAssertPrice() {
+        when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(buildItemResponse());
+        assertEquals(499.5, orderServiceController.addItem(buildItemDTO()).getBody().getPrice());
+    }
+
+    @Test
+    void testAddItemWhenOrderIsNotValid() {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setProductId(-1L);
+        dto.setQuantity(-2);
+        dto.setOrderId(1L);
+        validator.validate(dto).forEach(v -> assertNotNull(v));
+    }
+
+    @Test
+    void testAddItemNegativeAssertReturnValue() {
+        when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(null);
+        assertNull(orderServiceController.addItem(null).getBody());
+    }
+
+    @Test
+    void testAddItemNegativeAssertStatusCode() {
+        when(orderItemService.addItem(any(OrderItemDTO.class))).thenReturn(null);
+        assertEquals(400, orderServiceController.addItem(null).getStatusCode().value());
+    }
+
+    // ── updateItem ────────────────────────────────────────────────────────────────
+
+    @Test
+    void testUpdateItemWhenItemIsValid() {
+        validator.validate(buildItemDTO()).forEach(v -> assertNull(v));
+    }
+
+    @Test
+    void testUpdateItemPositiveAssertReturnValue() {
+        when(orderItemService.updateItem(any(), any(OrderItemDTO.class))).thenReturn(buildItemResponse());
+        assertNotNull(orderServiceController.updateItem(1L, buildItemDTO()).getBody());
+    }
+
+    @Test
+    void testUpdateItemPositiveAssertStatusCode() {
+        when(orderItemService.updateItem(any(), any(OrderItemDTO.class))).thenReturn(buildItemResponse());
+        assertEquals(202, orderServiceController.updateItem(1L, buildItemDTO()).getStatusCode().value());
+    }
+
+    @Test
+    void testUpdateItemPositiveAssertProductId() {
+        OrderItemResponseDTO dto = buildItemResponse();
+        dto.setProductId(7L);
+        when(orderItemService.updateItem(any(), any(OrderItemDTO.class))).thenReturn(dto);
+        assertEquals(7L, orderServiceController.updateItem(1L, buildItemDTO()).getBody().getProductId());
+    }
+
+    @Test
+    void testUpdateItemPositiveAssertPrice() {
+        OrderItemResponseDTO dto = buildItemResponse();
+        dto.setPrice(1499.0);
+        when(orderItemService.updateItem(any(), any(OrderItemDTO.class))).thenReturn(dto);
+        assertEquals(1499.0, orderServiceController.updateItem(1L, buildItemDTO()).getBody().getPrice());
+    }
+
+    @Test
+    void testUpdateItemWhenOrderIsNotValid() {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setProductId(-1L);
+        dto.setQuantity(-2);
+        dto.setOrderId(1L);
+        validator.validate(dto).forEach(v -> assertNotNull(v));
+    }
+
+    @Test
+    void testUpdateItemNegativeAssertReturnValue() {
+        when(orderItemService.updateItem(any(), any(OrderItemDTO.class))).thenReturn(null);
+        assertNull(orderServiceController.updateItem(1L, null).getBody());
+    }
+
+    @Test
+    void testUpdateItemNegativeAssertStatusCode() {
+        when(orderItemService.updateItem(any(), any(OrderItemDTO.class))).thenReturn(null);
+        assertEquals(400, orderServiceController.updateItem(1L, null).getStatusCode().value());
+    }
+
+    // ── deleteItem ────────────────────────────────────────────────────────────────
+
+    @Test
+    void testDeleteItemPositiveAssertReturnValue() {
+        when(orderItemService.deleteItem(any())).thenReturn("Item deleted with Id: 1");
+        assertNotNull(orderServiceController.deleteItem(1L).getBody());
+    }
+
+    @Test
+    void testDeleteItemPositiveAssertStatusCode() {
+        when(orderItemService.deleteItem(any())).thenReturn("Item deleted with Id: 1");
+        assertEquals(200, orderServiceController.deleteItem(1L).getStatusCode().value());
+    }
+
+    @Test
+    void testDeleteItemPositiveAssertMessage() {
+        when(orderItemService.deleteItem(any())).thenReturn("Item deleted with Id: 1");
+        assertEquals("Item deleted with Id: 1", orderServiceController.deleteItem(1L).getBody());
+    }
+
+    @Test
+    void testDeleteItemNegativeAssertReturnValue() {
+        when(orderItemService.deleteItem(any())).thenReturn(null);
+        assertNull(orderServiceController.deleteItem(1L).getBody());
+    }
+
+    @Test
+    void testDeleteItemNegativeAssertStatusCode() {
+        when(orderItemService.deleteItem(any())).thenReturn(null);
+        assertEquals(400, orderServiceController.deleteItem(1L).getStatusCode().value());
     }
 }
