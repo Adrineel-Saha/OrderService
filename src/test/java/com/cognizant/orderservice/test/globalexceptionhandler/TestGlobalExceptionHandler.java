@@ -1,4 +1,4 @@
-﻿package com.cognizant.orderservice.test.globalexceptionhandler;
+package com.cognizant.orderservice.test.globalexceptionhandler;
 
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.globalexceptionhandler.GlobalExceptionHandler;
