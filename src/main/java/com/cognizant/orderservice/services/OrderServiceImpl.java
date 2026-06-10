@@ -29,8 +29,6 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     private ModelMapper modelMapper;
 
-//    private static final Logger log = LoggerFactory.getLogger(OrderService.class);
-
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
     @Override
     public OrderResponseDTO createOrder(OrderDTO orderDTO) {

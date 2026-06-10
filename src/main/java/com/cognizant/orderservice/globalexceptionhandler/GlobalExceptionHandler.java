@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
         String allMessages = ex.getBindingResult()
                 .getAllErrors()
                 .stream()
-                .map(err -> err.getDefaultMessage())   // only the human-readable message
+                .map(err -> err.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
         ResponseEntity<String> errorResponse = new ResponseEntity<String>(allMessages, HttpStatus.BAD_REQUEST);
