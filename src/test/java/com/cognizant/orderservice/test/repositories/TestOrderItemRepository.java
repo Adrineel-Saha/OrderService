@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 @ContextConfiguration(classes = OrderServiceApplication.class)
 @ActiveProfiles("test")
-class TestOrderItemRepository {
+public class TestOrderItemRepository {
 
     @Autowired
     private OrderItemRepository orderItemRepository;

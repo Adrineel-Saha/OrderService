@@ -31,7 +31,7 @@ import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = OrderServiceApplication.class)
 @ActiveProfiles("test")
-class TestOrderServiceController {
+public class TestOrderServiceController {
 
     @Mock
     private OrderService orderService;
