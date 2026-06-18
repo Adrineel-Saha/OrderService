@@ -10,14 +10,14 @@ import com.cognizant.orderservice.repositories.OrderRepository;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -28,6 +28,14 @@ public class OrderServiceImpl implements OrderService{
     private UserFeignClient userFeignClient;
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private Map<Long, UserDTO> userCache
+
+    @KafkaListener(topics = "${app.kafka.userproducer.topic}", groupId = "${spring.kafka.consumer.group-id}")
+    public void consumeUserEvent(UserDTO userDTO) {
+        userCache.put(userDTO.getId(), userDTO);
+        log.info("Received and cached UserDTO from user-events: {}", userDTO);
+    }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
     @Override
@@ -47,11 +55,7 @@ public class OrderServiceImpl implements OrderService{
 
     public OrderResponseDTO createOrderGetDefaultUser(OrderDTO orderDTO , Throwable throwable) {
         Long userId=orderDTO.getUserId();
-
-        UserDTO userDTO=new UserDTO();
-        userDTO.setId(userId);
-        userDTO.setUserName("Aman");
-        userDTO.setEmail("Aman@example.com");
+        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
 
         Order order=modelMapper.map(orderDTO,Order.class);
         order.setCreatedAt(LocalDateTime.now());
@@ -81,13 +85,8 @@ public class OrderServiceImpl implements OrderService{
         Order order=orderRepository.findById(orderId).orElseThrow(
                 ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
         );
-
         Long userId=order.getUserId();
-
-        UserDTO userDTO=new UserDTO();
-        userDTO.setId(userId);
-        userDTO.setUserName("Suraj");
-        userDTO.setEmail("suraj@example.com");
+        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
 
         OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
         modelMapper.map(userDTO,orderResponseDTO);
@@ -119,12 +118,7 @@ public class OrderServiceImpl implements OrderService{
         List<OrderResponseDTO> orderResponseDTOList=orderList.stream().
                 map(order->{
                     Long userId=order.getUserId();
-
-                    UserDTO userDTO=new UserDTO();
-                    userDTO.setId(userId);
-                    userDTO.setUserName("Aman");
-                    userDTO.setEmail("Aman@example.com");
-
+                    UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
                     OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
                     modelMapper.map(userDTO,orderResponseDTO);
                     return orderResponseDTO;
@@ -159,10 +153,7 @@ public class OrderServiceImpl implements OrderService{
     }
 
     public List<OrderResponseDTO> listOrdersByUserGetDefaultUser(Long userId , Throwable throwable) {
-        UserDTO userDTO=new UserDTO();
-        userDTO.setId(userId);
-        userDTO.setUserName("Suraj");
-        userDTO.setEmail("suraj@example.com");
+        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
 
         List<Order> orderList = orderRepository.findByUserId(userId);
 
@@ -207,11 +198,7 @@ public class OrderServiceImpl implements OrderService{
         Order savedOrder=orderRepository.save(order);
 
         Long userId=savedOrder.getUserId();
-
-        UserDTO userDTO=new UserDTO();
-        userDTO.setId(userId);
-        userDTO.setUserName("Aman");
-        userDTO.setEmail("Aman@example.com");
+        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
 
         OrderResponseDTO orderResponseDTO=modelMapper.map(savedOrder, OrderResponseDTO.class);
         modelMapper.map(userDTO,orderResponseDTO);
@@ -228,5 +215,13 @@ public class OrderServiceImpl implements OrderService{
 
         orderRepository.delete(order);
         return "Order deleted with Id: " + orderId;
+    }
+
+    private UserDTO getFallbackUser(Long userId) {
+        UserDTO userDTO = new UserDTO();
+        userDTO.setId(userId);
+        userDTO.setUserName("Unknown");
+        userDTO.setEmail("unknown@example.com");
+        return userDTO;
     }
 }

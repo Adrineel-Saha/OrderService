@@ -1,5 +1,7 @@
 package com.cognizant.orderservice.main;
 
+import com.cognizant.orderservice.dtos.ProductDTO;
+import com.cognizant.orderservice.dtos.UserDTO;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import io.swagger.v3.oas.annotations.info.Info;
 import io.swagger.v3.oas.models.Components;
@@ -17,6 +19,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SpringBootApplication(scanBasePackages = "com.cognizant.orderservice.*")
 @EnableJpaRepositories(basePackages = "com.cognizant.orderservice.repositories")
@@ -58,5 +62,15 @@ public class OrderServiceApplication {
 										.bearerFormat("JWT")
 						)
 				);
+	}
+
+	@Bean
+	public Map<Long, UserDTO> userMap(){
+		return new ConcurrentHashMap<>();
+	}
+
+	@Bean
+	public Map<Long, ProductDTO> productMap(){
+		return new ConcurrentHashMap<>();
 	}
 }
