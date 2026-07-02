@@ -1,6 +1,8 @@
 package com.cognizant.orderservice.services;
 
-import com.cognizant.orderservice.dtos.*;
+import com.cognizant.orderservice.dtos.OrderItemDTO;
+import com.cognizant.orderservice.dtos.OrderItemResponseDTO;
+import com.cognizant.orderservice.dtos.ProductDTO;
 import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.entities.OrderItem;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -41,37 +43,22 @@ public class OrderItemServiceImpl implements OrderItemService{
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "addItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO addItem(OrderItemDTO orderItemDTO) {
-        Long orderId=orderItemDTO.getOrderId();
-        Order order=orderRepository.findById(orderId).orElseThrow(
-                ()->new RuntimeException("Order not found with Id: "+ orderId)
-        );
-
-        Long productId=orderItemDTO.getProductId();
-        ProductDTO productDTO=productFeignClient.getProduct(productId);
-
-        OrderItem orderItem=modelMapper.map(orderItemDTO,OrderItem.class);
-        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
-
-        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem,OrderItemResponseDTO.class);
-        modelMapper.map(productDTO,orderItemResponseDTO);
-        orderItemResponseDTO.setOrderId(savedOrderItem.getId());
-        return orderItemResponseDTO;
+        findOrderOrThrow(orderItemDTO.getOrderId());
+        ProductDTO productDTO = productFeignClient.getProduct(orderItemDTO.getProductId());
+        return saveItemAndBuildResponse(orderItemDTO, productDTO);
     }
 
     public OrderItemResponseDTO addItemGetDefaultProduct(OrderItemDTO orderItemDTO , Throwable throwable) {
-        Long orderId=orderItemDTO.getOrderId();
-        orderRepository.findById(orderId).orElseThrow(
-                ()->new RuntimeException("Order not found with Id: "+ orderId)
-        );
+        findOrderOrThrow(orderItemDTO.getOrderId());
+        ProductDTO productDTO = productCache.getOrDefault(orderItemDTO.getProductId(), getFallbackProduct(orderItemDTO.getProductId()));
+        return saveItemAndBuildResponse(orderItemDTO, productDTO);
+    }
 
-        Long productId=orderItemDTO.getProductId();
-        ProductDTO productDTO=productCache.getOrDefault(productId, getFallbackProduct(productId));
+    private OrderItemResponseDTO saveItemAndBuildResponse(OrderItemDTO orderItemDTO, ProductDTO productDTO) {
+        OrderItem orderItem = modelMapper.map(orderItemDTO, OrderItem.class);
+        OrderItem savedOrderItem = orderItemRepository.save(orderItem);
 
-        OrderItem orderItem=modelMapper.map(orderItemDTO,OrderItem.class);
-        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
-
-        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem,OrderItemResponseDTO.class);
-        modelMapper.map(productDTO,orderItemResponseDTO);
+        OrderItemResponseDTO orderItemResponseDTO = toOrderItemResponseDTO(savedOrderItem, productDTO);
         orderItemResponseDTO.setOrderId(savedOrderItem.getId());
         return orderItemResponseDTO;
     }
@@ -79,229 +66,148 @@ public class OrderItemServiceImpl implements OrderItemService{
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "getItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO getItem(Long itemId) {
-        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
-                ()->new ResourceNotFoundException("Item not found with Id: "+ itemId)
-        );
-        Long productId=orderItem.getProductId();
-        ProductDTO productDTO=productFeignClient.getProduct(productId);
-
-        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
-        modelMapper.map(productDTO,orderItemResponseDTO);
-        orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
-        return orderItemResponseDTO;
+        OrderItem orderItem = findItemOrThrow(itemId);
+        ProductDTO productDTO = productFeignClient.getProduct(orderItem.getProductId());
+        return toOrderItemResponseWithOrderId(orderItem, productDTO);
     }
 
     public OrderItemResponseDTO getItemGetDefaultProduct(Long itemId , Throwable throwable) {
-        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
-                ()->new ResourceNotFoundException("Item not found with Id: "+ itemId)
-        );
-        Long productId=orderItem.getProductId();
-        ProductDTO productDTO=productCache.getOrDefault(productId, getFallbackProduct(productId));
-
-        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
-        modelMapper.map(productDTO,orderItemResponseDTO);
-        orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
-        return orderItemResponseDTO;
+        OrderItem orderItem = findItemOrThrow(itemId);
+        ProductDTO productDTO = productCache.getOrDefault(orderItem.getProductId(), getFallbackProduct(orderItem.getProductId()));
+        return toOrderItemResponseWithOrderId(orderItem, productDTO);
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItems() {
-        List<OrderItem> orderItemList=orderItemRepository.findAll();
-        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().
-                map(orderItem->{
-                    Long productId= orderItem.getProductId();
-                    ProductDTO productDTO=productFeignClient.getProduct(productId);
-                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
-                    modelMapper.map(productDTO,orderItemResponseDTO);
-                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
-                    return orderItemResponseDTO;
-                }).toList();
-
-        if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Item List is Empty");
-        }
-
-        return orderItemResponseDTOList;
+        List<OrderItem> orderItemList = orderItemRepository.findAll();
+        return toOrderItemResponseList(orderItemList, item -> productFeignClient.getProduct(item.getProductId()));
     }
 
     public List<OrderItemResponseDTO> listItemsGetDefaultProduct(Throwable throwable) {
-        List<OrderItem> orderItemList=orderItemRepository.findAll();
-        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().
-                map(orderItem->{
-                    Long productId= orderItem.getProductId();
-                    ProductDTO productDTO=productCache.getOrDefault(productId, getFallbackProduct(productId));
-                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem, OrderItemResponseDTO.class);
-                    modelMapper.map(productDTO,orderItemResponseDTO);
-                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
-                    return orderItemResponseDTO;
-                }).toList();
-
-        if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Item List is Empty");
-        }
-
-        return orderItemResponseDTOList;
+        List<OrderItem> orderItemList = orderItemRepository.findAll();
+        return toOrderItemResponseList(orderItemList, item -> productCache.getOrDefault(item.getProductId(), getFallbackProduct(item.getProductId())));
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsByProductGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByProduct(Long productId) {
-        ProductDTO productDTO=productFeignClient.getProduct(productId);
-
-        List<OrderItem> orderItemList=orderItemRepository.findByProductId(productId);
-
-        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
-                orderItem->{
-                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
-                    modelMapper.map(productDTO,orderItemResponseDTO);
-                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
-                    return orderItemResponseDTO;
-                }
-        ).toList();
-
-        if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Item List is Empty");
-        }
-
-        return orderItemResponseDTOList;
+        ProductDTO productDTO = productFeignClient.getProduct(productId);
+        List<OrderItem> orderItemList = orderItemRepository.findByProductId(productId);
+        return toOrderItemResponseList(orderItemList, item -> productDTO);
     }
 
     public List<OrderItemResponseDTO> listItemsByProductGetDefaultProduct(Long productId , Throwable throwable) {
-        ProductDTO productDTO=productCache.getOrDefault(productId, getFallbackProduct(productId));
-
-        List<OrderItem> orderItemList=orderItemRepository.findByProductId(productId);
-
-        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
-                orderItem->{
-                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
-                    modelMapper.map(productDTO,orderItemResponseDTO);
-                    orderItemResponseDTO.setOrderId(orderItem.getOrder().getId());
-                    return orderItemResponseDTO;
-                }
-        ).toList();
-
-        if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Item List is Empty");
-        }
-
-        return orderItemResponseDTOList;
+        ProductDTO productDTO = productCache.getOrDefault(productId, getFallbackProduct(productId));
+        List<OrderItem> orderItemList = orderItemRepository.findByProductId(productId);
+        return toOrderItemResponseList(orderItemList, item -> productDTO);
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsByOrderGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByOrder(Long orderId) {
-        List<OrderItem> orderItemList=orderItemRepository.findByOrderId(orderId);
-        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
-                orderItem->{
-                    Long productId=orderItem.getProductId();
-                    ProductDTO productDTO=productFeignClient.getProduct(productId);
-                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
-                    modelMapper.map(productDTO,orderItemResponseDTO);
-                    orderItemResponseDTO.setOrderId(orderId);
-                    return orderItemResponseDTO;
-                }
-        ).toList();
-
-        if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Item List is Empty");
-        }
-
-        return orderItemResponseDTOList;
+        List<OrderItem> orderItemList = orderItemRepository.findByOrderId(orderId);
+        return toOrderItemResponseList(orderItemList, item -> productFeignClient.getProduct(item.getProductId()), orderId);
     }
 
     public List<OrderItemResponseDTO> listItemsByOrderGetDefaultProduct(Long orderId , Throwable throwable) {
-        List<OrderItem> orderItemList=orderItemRepository.findByOrderId(orderId);
-        List<OrderItemResponseDTO> orderItemResponseDTOList=orderItemList.stream().map(
-                orderItem->{
-                    Long productId=orderItem.getProductId();
-                    ProductDTO productDTO=productCache.getOrDefault(productId, getFallbackProduct(productId));
-                    OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(orderItem,OrderItemResponseDTO.class);
-                    modelMapper.map(productDTO,orderItemResponseDTO);
-                    orderItemResponseDTO.setOrderId(orderId);
-                    return orderItemResponseDTO;
-                }
-        ).toList();
-
-        if(orderItemResponseDTOList.isEmpty()){
-            throw new RuntimeException("Item List is Empty");
-        }
-
-        return orderItemResponseDTOList;
+        List<OrderItem> orderItemList = orderItemRepository.findByOrderId(orderId);
+        return toOrderItemResponseList(orderItemList, item -> productCache.getOrDefault(item.getProductId(), getFallbackProduct(item.getProductId())), orderId);
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO updateItem(Long itemId, OrderItemDTO orderItemDTO) {
-        orderItemDTO.setId(itemId);
-        Long orderId=orderItemDTO.getOrderId();
-
-        Order order=orderRepository.findById(orderItemDTO.getOrderId()).orElseThrow(
-                ()->new RuntimeException("Order not found with Id: "+ orderId)
-        );
-
-        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
-                ()->new RuntimeException("Order Item not found with Id: "+ itemId)
-        );
-
-        if(orderItem.getOrder().getId()!=orderId){
-            throw new RuntimeException("Please enter matching Order Id: "+ orderItem.getOrder().getId());
-        }
-
-        modelMapper.map(orderItemDTO,orderItem);
-        orderItem.setOrder(order);
-
-        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
-
-        Long productId= savedOrderItem.getProductId();
-        ProductDTO productDTO=productFeignClient.getProduct(productId);
-
-        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem, OrderItemResponseDTO.class);
-        modelMapper.map(productDTO,orderItemResponseDTO);
-        orderItemResponseDTO.setOrderId(orderId);
-        return orderItemResponseDTO;
+        OrderItem savedOrderItem = applyItemUpdateAndSave(itemId, orderItemDTO);
+        ProductDTO productDTO = productFeignClient.getProduct(savedOrderItem.getProductId());
+        return toOrderItemResponseWithOrderId(savedOrderItem, productDTO, orderItemDTO.getOrderId());
     }
 
     public OrderItemResponseDTO updateItemGetDefaultProduct(Long itemId, OrderItemDTO orderItemDTO , Throwable throwable) {
+        OrderItem savedOrderItem = applyItemUpdateAndSave(itemId, orderItemDTO);
+        ProductDTO productDTO = productCache.getOrDefault(savedOrderItem.getProductId(), getFallbackProduct(savedOrderItem.getProductId()));
+        return toOrderItemResponseWithOrderId(savedOrderItem, productDTO, orderItemDTO.getOrderId());
+    }
+
+    private OrderItem applyItemUpdateAndSave(Long itemId, OrderItemDTO orderItemDTO) {
         orderItemDTO.setId(itemId);
-        Long orderId=orderItemDTO.getOrderId();
+        Long orderId = orderItemDTO.getOrderId();
 
-        Order order=orderRepository.findById(orderItemDTO.getOrderId()).orElseThrow(
-                ()->new RuntimeException("Order not found with Id: "+ orderId)
+        Order order = findOrderOrThrow(orderId);
+        OrderItem orderItem = orderItemRepository.findById(itemId).orElseThrow(
+                () -> new ResourceNotFoundException("Order Item not found with Id: " + itemId)
         );
 
-        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
-                ()->new RuntimeException("Order Item not found with Id: "+ itemId)
-        );
-
-        if(orderItem.getOrder().getId()!=orderId){
-            throw new RuntimeException("Please enter matching Order Id: "+ orderItem.getOrder().getId());
+        if (!orderId.equals(orderItem.getOrder().getId())) {
+            throw new ResourceNotFoundException("Please enter matching Order Id: " + orderItem.getOrder().getId());
         }
 
-        modelMapper.map(orderItemDTO,orderItem);
+        modelMapper.map(orderItemDTO, orderItem);
         orderItem.setOrder(order);
 
-        OrderItem savedOrderItem=orderItemRepository.save(orderItem);
-
-        Long productId= savedOrderItem.getProductId();
-        ProductDTO productDTO=productCache.getOrDefault(productId, getFallbackProduct(productId));
-
-        OrderItemResponseDTO orderItemResponseDTO=modelMapper.map(savedOrderItem, OrderItemResponseDTO.class);
-        modelMapper.map(productDTO,orderItemResponseDTO);
-        orderItemResponseDTO.setOrderId(orderId);
-        return orderItemResponseDTO;
+        return orderItemRepository.save(orderItem);
     }
 
     @Override
     public String deleteItem(Long itemId) {
-        OrderItem orderItem=orderItemRepository.findById(itemId).orElseThrow(
-                ()->new ResourceNotFoundException("Item not found with Id: "+ itemId)
-        );
+        OrderItem orderItem = findItemOrThrow(itemId);
 
-        log.info("Deleted Item: " + orderItem);
+        log.info("Deleted Item: {}", orderItem);
 
         orderItemRepository.delete(orderItem);
         return "Item deleted with Id: " + itemId;
+    }
+
+    private Order findOrderOrThrow(Long orderId) {
+        return orderRepository.findById(orderId).orElseThrow(
+                () -> new ResourceNotFoundException("Order not found with Id: " + orderId)
+        );
+    }
+
+    private OrderItem findItemOrThrow(Long itemId) {
+        return orderItemRepository.findById(itemId).orElseThrow(
+                () -> new ResourceNotFoundException("Item not found with Id: " + itemId)
+        );
+    }
+
+    private List<OrderItemResponseDTO> toOrderItemResponseList(List<OrderItem> orderItemList, Function<OrderItem, ProductDTO> productResolver) {
+        List<OrderItemResponseDTO> orderItemResponseDTOList = orderItemList.stream()
+                .map(orderItem -> toOrderItemResponseWithOrderId(orderItem, productResolver.apply(orderItem)))
+                .toList();
+
+        if (orderItemResponseDTOList.isEmpty()) {
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    private List<OrderItemResponseDTO> toOrderItemResponseList(List<OrderItem> orderItemList, Function<OrderItem, ProductDTO> productResolver, Long orderId) {
+        List<OrderItemResponseDTO> orderItemResponseDTOList = orderItemList.stream()
+                .map(orderItem -> toOrderItemResponseWithOrderId(orderItem, productResolver.apply(orderItem), orderId))
+                .toList();
+
+        if (orderItemResponseDTOList.isEmpty()) {
+            throw new RuntimeException("Item List is Empty");
+        }
+
+        return orderItemResponseDTOList;
+    }
+
+    private OrderItemResponseDTO toOrderItemResponseWithOrderId(OrderItem orderItem, ProductDTO productDTO) {
+        return toOrderItemResponseWithOrderId(orderItem, productDTO, orderItem.getOrder().getId());
+    }
+
+    private OrderItemResponseDTO toOrderItemResponseWithOrderId(OrderItem orderItem, ProductDTO productDTO, Long orderId) {
+        OrderItemResponseDTO orderItemResponseDTO = toOrderItemResponseDTO(orderItem, productDTO);
+        orderItemResponseDTO.setOrderId(orderId);
+        return orderItemResponseDTO;
+    }
+
+    private OrderItemResponseDTO toOrderItemResponseDTO(OrderItem orderItem, ProductDTO productDTO) {
+        OrderItemResponseDTO orderItemResponseDTO = modelMapper.map(orderItem, OrderItemResponseDTO.class);
+        modelMapper.map(productDTO, orderItemResponseDTO);
+        return orderItemResponseDTO;
     }
 
     private ProductDTO getFallbackProduct(Long productId) {

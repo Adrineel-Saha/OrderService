@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 @Service
 @Slf4j
@@ -40,181 +40,114 @@ public class OrderServiceImpl implements OrderService{
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
     @Override
     public OrderResponseDTO createOrder(OrderDTO orderDTO) {
-        Long userId=orderDTO.getUserId();
-        UserDTO userDTO=userFeignClient.getUser(userId);
-
-        Order order=modelMapper.map(orderDTO,Order.class);
-        order.setCreatedAt(LocalDateTime.now());
-
-        Order savedOrder=orderRepository.save(order);
-
-        OrderResponseDTO orderResponseDTO=modelMapper.map(savedOrder, OrderResponseDTO.class);
-        modelMapper.map(userDTO,orderResponseDTO);
-        return orderResponseDTO;
+        UserDTO userDTO = userFeignClient.getUser(orderDTO.getUserId());
+        return saveOrderAndBuildResponse(orderDTO, userDTO);
     }
 
     public OrderResponseDTO createOrderGetDefaultUser(OrderDTO orderDTO , Throwable throwable) {
-        Long userId=orderDTO.getUserId();
-        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
+        UserDTO userDTO = userCache.getOrDefault(orderDTO.getUserId(), getFallbackUser(orderDTO.getUserId()));
+        return saveOrderAndBuildResponse(orderDTO, userDTO);
+    }
 
-        Order order=modelMapper.map(orderDTO,Order.class);
+    private OrderResponseDTO saveOrderAndBuildResponse(OrderDTO orderDTO, UserDTO userDTO) {
+        Order order = modelMapper.map(orderDTO, Order.class);
         order.setCreatedAt(LocalDateTime.now());
-
-        Order savedOrder=orderRepository.save(order);
-
-        OrderResponseDTO orderResponseDTO=modelMapper.map(savedOrder, OrderResponseDTO.class);
-        modelMapper.map(userDTO,orderResponseDTO);
-        return orderResponseDTO;
+        Order savedOrder = orderRepository.save(order);
+        return toOrderResponseDTO(savedOrder, userDTO);
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "getOrderGetDefaultUser")
     @Override
     public OrderResponseDTO getOrder(Long orderId) {
-        Order order=orderRepository.findById(orderId).orElseThrow(
-                ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
-        );
-        Long userId=order.getUserId();
-        UserDTO userDTO=userFeignClient.getUser(userId);
-
-        OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
-        modelMapper.map(userDTO,orderResponseDTO);
-        return orderResponseDTO;
+        Order order = findOrderOrThrow(orderId);
+        UserDTO userDTO = userFeignClient.getUser(order.getUserId());
+        return toOrderResponseDTO(order, userDTO);
     }
 
     public OrderResponseDTO getOrderGetDefaultUser(Long orderId , Throwable throwable) {
-        Order order=orderRepository.findById(orderId).orElseThrow(
-                ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
-        );
-        Long userId=order.getUserId();
-        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
-
-        OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
-        modelMapper.map(userDTO,orderResponseDTO);
-        return orderResponseDTO;
+        Order order = findOrderOrThrow(orderId);
+        UserDTO userDTO = userCache.getOrDefault(order.getUserId(), getFallbackUser(order.getUserId()));
+        return toOrderResponseDTO(order, userDTO);
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listOrdersGetDefaultUser")
     @Override
     public List<OrderResponseDTO> listOrders() {
-        List<Order> orderList=orderRepository.findAll();
-        List<OrderResponseDTO> orderResponseDTOList=orderList.stream().
-                map(order->{
-                    Long userId=order.getUserId();
-                    UserDTO userDTO=userFeignClient.getUser(userId);
-                    OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
-                    modelMapper.map(userDTO,orderResponseDTO);
-                    return orderResponseDTO;
-                }).toList();
-
-        if(orderResponseDTOList.isEmpty()){
-            throw new RuntimeException("Order List is Empty");
-        }
-
-        return orderResponseDTOList;
+        List<Order> orderList = orderRepository.findAll();
+        return toOrderResponseList(orderList, order -> userFeignClient.getUser(order.getUserId()));
     }
 
     public List<OrderResponseDTO> listOrdersGetDefaultUser(Throwable throwable) {
-        List<Order> orderList=orderRepository.findAll();
-        List<OrderResponseDTO> orderResponseDTOList=orderList.stream().
-                map(order->{
-                    Long userId=order.getUserId();
-                    UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
-                    OrderResponseDTO orderResponseDTO=modelMapper.map(order, OrderResponseDTO.class);
-                    modelMapper.map(userDTO,orderResponseDTO);
-                    return orderResponseDTO;
-                }).toList();
-
-        if(orderResponseDTOList.isEmpty()){
-            throw new RuntimeException("Order List is Empty");
-        }
-
-        return orderResponseDTOList;
+        List<Order> orderList = orderRepository.findAll();
+        return toOrderResponseList(orderList, order -> userCache.getOrDefault(order.getUserId(), getFallbackUser(order.getUserId())));
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listOrdersByUserGetDefaultUser")
     @Override
     public List<OrderResponseDTO> listOrdersByUser(Long userId) {
         UserDTO userDTO = userFeignClient.getUser(userId);
-
         List<Order> orderList = orderRepository.findByUserId(userId);
-
-        List<OrderResponseDTO> orderResponseDTOList = orderList.stream().
-                map(order -> {
-                    OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
-                    modelMapper.map(userDTO, orderResponseDTO);
-                    return orderResponseDTO;
-                }).toList();
-
-        if(orderResponseDTOList.isEmpty()){
-            throw new RuntimeException("Order List is Empty");
-        }
-
-        return orderResponseDTOList;
+        return toOrderResponseList(orderList, order -> userDTO);
     }
 
     public List<OrderResponseDTO> listOrdersByUserGetDefaultUser(Long userId , Throwable throwable) {
-        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
-
+        UserDTO userDTO = userCache.getOrDefault(userId, getFallbackUser(userId));
         List<Order> orderList = orderRepository.findByUserId(userId);
-
-        List<OrderResponseDTO> orderResponseDTOList = orderList.stream().
-                map(order -> {
-                    OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
-                    modelMapper.map(userDTO, orderResponseDTO);
-                    return orderResponseDTO;
-                }).toList();
-
-        if(orderResponseDTOList.isEmpty()){
-            throw new RuntimeException("Order List is Empty");
-        }
-
-        return orderResponseDTOList;
+        return toOrderResponseList(orderList, order -> userDTO);
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateOrderStatusGetDefaultUser")
     @Override
     public OrderResponseDTO updateOrderStatus(Long orderId, String status) {
-        Order order=orderRepository.findById(orderId).orElseThrow(
-                ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
-        );
-
-        order.setStatus(status);
-        Order savedOrder=orderRepository.save(order);
-
-        Long userId=savedOrder.getUserId();
-        UserDTO userDTO=userFeignClient.getUser(userId);
-
-        OrderResponseDTO orderResponseDTO=modelMapper.map(savedOrder, OrderResponseDTO.class);
-        modelMapper.map(userDTO,orderResponseDTO);
-        return orderResponseDTO;
+        Order savedOrder = updateStatusAndSave(orderId, status);
+        UserDTO userDTO = userFeignClient.getUser(savedOrder.getUserId());
+        return toOrderResponseDTO(savedOrder, userDTO);
     }
 
     public OrderResponseDTO updateOrderStatusGetDefaultUser(Long orderId, String status , Throwable throwable) {
-        Order order=orderRepository.findById(orderId).orElseThrow(
-                ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
-        );
+        Order savedOrder = updateStatusAndSave(orderId, status);
+        UserDTO userDTO = userCache.getOrDefault(savedOrder.getUserId(), getFallbackUser(savedOrder.getUserId()));
+        return toOrderResponseDTO(savedOrder, userDTO);
+    }
 
+    private Order updateStatusAndSave(Long orderId, String status) {
+        Order order = findOrderOrThrow(orderId);
         order.setStatus(status);
-        Order savedOrder=orderRepository.save(order);
-
-        Long userId=savedOrder.getUserId();
-        UserDTO userDTO=userCache.getOrDefault(userId, getFallbackUser(userId));
-
-        OrderResponseDTO orderResponseDTO=modelMapper.map(savedOrder, OrderResponseDTO.class);
-        modelMapper.map(userDTO,orderResponseDTO);
-        return orderResponseDTO;
+        return orderRepository.save(order);
     }
 
     @Override
     public String deleteOrder(Long orderId) {
-        Order order=orderRepository.findById(orderId).orElseThrow(
-                ()->new ResourceNotFoundException("Order not found with Id: "+ orderId)
-        );
+        Order order = findOrderOrThrow(orderId);
 
-        log.info("Deleted Order: " + order);
+        log.info("Deleted Order: {}", order);
 
         orderRepository.delete(order);
         return "Order deleted with Id: " + orderId;
+    }
+
+    private Order findOrderOrThrow(Long orderId) {
+        return orderRepository.findById(orderId).orElseThrow(
+                () -> new ResourceNotFoundException("Order not found with Id: " + orderId)
+        );
+    }
+
+    private List<OrderResponseDTO> toOrderResponseList(List<Order> orderList, Function<Order, UserDTO> userResolver) {
+        List<OrderResponseDTO> orderResponseDTOList = orderList.stream()
+                .map(order -> toOrderResponseDTO(order, userResolver.apply(order)))
+                .toList();
+
+        if (orderResponseDTOList.isEmpty()) {
+            throw new RuntimeException("Order List is Empty");
+        }
+
+        return orderResponseDTOList;
+    }
+
+    private OrderResponseDTO toOrderResponseDTO(Order order, UserDTO userDTO) {
+        OrderResponseDTO orderResponseDTO = modelMapper.map(order, OrderResponseDTO.class);
+        modelMapper.map(userDTO, orderResponseDTO);
+        return orderResponseDTO;
     }
 
     private UserDTO getFallbackUser(Long userId) {
