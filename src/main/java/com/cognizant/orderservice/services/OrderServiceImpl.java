@@ -11,7 +11,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.annotation.KafkaListener;
+//import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -29,13 +29,13 @@ public class OrderServiceImpl implements OrderService{
     @Autowired
     private ModelMapper modelMapper;
     @Autowired
-    private Map<Long, UserDTO> userCache
+    private Map<Long, UserDTO> userCache;
 
-    @KafkaListener(topics = "${app.kafka.userproducer.topic}", groupId = "${spring.kafka.consumer.group-id}")
-    public void consumeUserEvent(UserDTO userDTO) {
-        userCache.put(userDTO.getId(), userDTO);
-        log.info("Received and cached UserDTO from user-events: {}", userDTO);
-    }
+//    @KafkaListener(topics = "${app.kafka.userproducer.topic}", groupId = "${spring.kafka.consumer.group-id}")
+//    public void consumeUserEvent(UserDTO userDTO) {
+//        userCache.put(userDTO.getId(), userDTO);
+//        log.info("Received and cached UserDTO from user-events: {}", userDTO);
+//    }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
     @Override
