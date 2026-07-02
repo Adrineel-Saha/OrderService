@@ -42,8 +42,4 @@ public class OrderResponseDTO {
     )
     private String email;
 
-    public Long getId() {
-        return id;
-    }
-
 }

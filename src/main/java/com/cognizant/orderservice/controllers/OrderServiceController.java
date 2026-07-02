@@ -51,9 +51,9 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<OrderResponseDTO> createOrder(@Valid @RequestBody OrderDTO orderDTO){
-        log.info("Adding new Order: " + orderDTO);
+        log.info("Adding new Order: {}", orderDTO);
         OrderResponseDTO orderResponseDTO= orderService.createOrder(orderDTO);
-        log.info("Created Order: " + orderResponseDTO);
+        log.info("Created Order: {}", orderResponseDTO);
 
         if(orderResponseDTO!=null){
             return new ResponseEntity<>(orderResponseDTO, HttpStatus.CREATED);
@@ -79,9 +79,9 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<OrderResponseDTO> getOrder(@PathVariable("orderId") Long orderId){
-        log.info("Getting Order with Id: " +orderId);
+        log.info("Getting Order with Id: {}", orderId);
         OrderResponseDTO orderResponseDTO= orderService.getOrder(orderId);
-        log.info("Found Order: " + orderResponseDTO);
+        log.info("Found Order: {}", orderResponseDTO);
 
         if(orderResponseDTO!=null){
             return new ResponseEntity<>(orderResponseDTO, HttpStatus.OK);
@@ -109,7 +109,7 @@ public class OrderServiceController {
     public ResponseEntity<List<OrderResponseDTO>> listOrders(){
         log.info("Getting All Orders");
         List<OrderResponseDTO> orderResponseDTOList= orderService.listOrders();
-        log.info("Orders list: " + orderResponseDTOList);
+        log.info("Orders list: {}", orderResponseDTOList);
 
         if(orderResponseDTOList!=null && !orderResponseDTOList.isEmpty()){
             return new ResponseEntity<>(orderResponseDTOList, HttpStatus.OK);
@@ -137,7 +137,7 @@ public class OrderServiceController {
     public ResponseEntity<List<OrderResponseDTO>> listOrdersByUser(@PathVariable("userId") Long userId){
         log.info("Getting All Orders By User");
         List<OrderResponseDTO> orderResponseDTOList= orderService.listOrdersByUser(userId);
-        log.info("Orders list: " + orderResponseDTOList);
+        log.info("Orders list: {}", orderResponseDTOList);
 
         if(orderResponseDTOList!=null && !orderResponseDTOList.isEmpty()){
             return new ResponseEntity<>(orderResponseDTOList, HttpStatus.OK);
@@ -167,9 +167,9 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<OrderResponseDTO> updateOrderStatus(@PathVariable("orderId") Long orderId,@Pattern(regexp = "CREATED|PAID|SHIPPED|CANCELLED") @PathVariable("status") String status){
-        log.info("Updating Order with Id: " + orderId + " and status: " + status);
+        log.info("Updating Order with Id: {} and status: {}", orderId, status);
         OrderResponseDTO orderResponseDTO= orderService.updateOrderStatus(orderId,status);
-        log.info("Updated Order: " + orderResponseDTO);
+        log.info("Updated Order: {}", orderResponseDTO);
 
         if(orderResponseDTO!=null){
             return new ResponseEntity<>(orderResponseDTO, HttpStatus.ACCEPTED);
@@ -195,7 +195,7 @@ public class OrderServiceController {
             ),
     })
     public ResponseEntity<String> deleteOrder(@PathVariable("orderId") Long orderId){
-        log.info("Deleting Order with Id: " + orderId);
+        log.info("Deleting Order with Id: {}", orderId);
         String result= orderService.deleteOrder(orderId);
 
         if (result != null) {
@@ -222,9 +222,9 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<OrderItemResponseDTO> addItem(@Valid @RequestBody OrderItemDTO orderItemDTO){
-        log.info("Adding new Item: " + orderItemDTO);
+        log.info("Adding new Item: {}", orderItemDTO);
         OrderItemResponseDTO orderItemResponseDTO= orderItemService.addItem(orderItemDTO);
-        log.info("Created Item: " + orderItemResponseDTO);
+        log.info("Created Item: {}", orderItemResponseDTO);
 
         if(orderItemResponseDTO!=null){
             return new ResponseEntity<>(orderItemResponseDTO, HttpStatus.CREATED);
@@ -250,9 +250,9 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<OrderItemResponseDTO> getItem(@PathVariable("itemId") Long itemId){
-        log.info("Getting Item with Id: " +itemId);
+        log.info("Getting Item with Id: {}", itemId);
         OrderItemResponseDTO orderItemResponseDTO= orderItemService.getItem(itemId);
-        log.info("Found Item: " + orderItemResponseDTO);
+        log.info("Found Item: {}", orderItemResponseDTO);
 
         if(orderItemResponseDTO!=null){
             return new ResponseEntity<>(orderItemResponseDTO, HttpStatus.OK);
@@ -280,7 +280,7 @@ public class OrderServiceController {
     public ResponseEntity<List<OrderItemResponseDTO>> listItems(){
         log.info("Getting All Items");
         List<OrderItemResponseDTO> orderItemResponseDTOList= orderItemService.listItems();
-        log.info("Items list: " + orderItemResponseDTOList);
+        log.info("Items list: {}", orderItemResponseDTOList);
 
         if(orderItemResponseDTOList!=null && !orderItemResponseDTOList.isEmpty()){
             return new ResponseEntity<>(orderItemResponseDTOList, HttpStatus.OK);
@@ -308,7 +308,7 @@ public class OrderServiceController {
     public ResponseEntity<List<OrderItemResponseDTO>> listItemsByProduct(@PathVariable("productId") Long productId){
         log.info("Getting All Items By Product");
         List<OrderItemResponseDTO> orderItemResponseDTOlist= orderItemService.listItemsByProduct(productId);
-        log.info("Items list: " + orderItemResponseDTOlist);
+        log.info("Items list: {}", orderItemResponseDTOlist);
 
         if(orderItemResponseDTOlist!=null && !orderItemResponseDTOlist.isEmpty()){
             return new ResponseEntity<>(orderItemResponseDTOlist, HttpStatus.OK);
@@ -336,7 +336,7 @@ public class OrderServiceController {
     public ResponseEntity<List<OrderItemResponseDTO>> listItemsByOrder(@PathVariable("orderId") Long orderId){
         log.info("Getting All Items By Order");
         List<OrderItemResponseDTO> orderItemResponseDTOlist= orderItemService.listItemsByOrder(orderId);
-        log.info("Items list: " + orderItemResponseDTOlist);
+        log.info("Items list: {}", orderItemResponseDTOlist);
 
         if(orderItemResponseDTOlist!=null && !orderItemResponseDTOlist.isEmpty()){
             return new ResponseEntity<>(orderItemResponseDTOlist, HttpStatus.OK);
@@ -366,9 +366,9 @@ public class OrderServiceController {
             )
     })
     public ResponseEntity<OrderItemResponseDTO> updateItem(@PathVariable("itemId") Long itemId,@Valid @RequestBody OrderItemDTO orderItemDTO){
-        log.info("Updating Item with Id: " + itemId + " and details: " + orderItemDTO);
+        log.info("Updating Item with Id: {} and details: {}", itemId, orderItemDTO);
         OrderItemResponseDTO orderItemResponseDTO= orderItemService.updateItem(itemId, orderItemDTO);
-        log.info("Updated Order: " + orderItemResponseDTO);
+        log.info("Updated Item: {}", orderItemResponseDTO);
 
         if(orderItemResponseDTO!=null){
             return new ResponseEntity<>(orderItemResponseDTO, HttpStatus.ACCEPTED);
@@ -394,7 +394,7 @@ public class OrderServiceController {
             ),
     })
     public ResponseEntity<String> deleteItem(@PathVariable("itemId") Long itemId){
-        log.info("Deleting Item with Id: " + itemId);
+        log.info("Deleting Item with Id: {}", itemId);
         String result= orderItemService.deleteItem(itemId);
 
         if (result != null) {
