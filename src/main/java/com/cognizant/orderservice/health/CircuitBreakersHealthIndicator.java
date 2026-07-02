@@ -2,6 +2,7 @@ package com.cognizant.orderservice.health;
 
 import io.github.resilience4j.circuitbreaker.CircuitBreaker;
 import io.github.resilience4j.circuitbreaker.CircuitBreakerRegistry;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.health.contributor.Health;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.stereotype.Component;
@@ -12,11 +13,8 @@ import java.util.Map;
 @Component
 public class CircuitBreakersHealthIndicator implements HealthIndicator {
 
-    private final CircuitBreakerRegistry circuitBreakerRegistry;
-
-    public CircuitBreakersHealthIndicator(CircuitBreakerRegistry circuitBreakerRegistry) {
-        this.circuitBreakerRegistry = circuitBreakerRegistry;
-    }
+    @Autowired
+    private CircuitBreakerRegistry circuitBreakerRegistry;
 
     @Override
     public Health health() {
