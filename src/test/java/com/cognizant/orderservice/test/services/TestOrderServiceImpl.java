@@ -22,6 +22,7 @@ import org.modelmapper.ModelMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -42,6 +43,8 @@ class TestOrderServiceImpl {
     private UserFeignClient userFeignClient;
     @Mock
     private ModelMapper modelMapper;
+    @Mock
+    private Map<Long, UserDTO> userCache;
     @InjectMocks
     private OrderServiceImpl orderServiceImpl;
 
