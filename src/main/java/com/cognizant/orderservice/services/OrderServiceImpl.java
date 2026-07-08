@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,6 +22,7 @@ import java.util.function.Function;
 
 @Service
 @Slf4j
+@Transactional(readOnly = true)
 public class OrderServiceImpl implements OrderService{
     @Autowired
     private OrderRepository orderRepository;
@@ -38,6 +40,7 @@ public class OrderServiceImpl implements OrderService{
 //    }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
+    @Transactional
     @Override
     public OrderResponseDTO createOrder(OrderDTO orderDTO) {
         UserDTO userDTO = userFeignClient.getUser(orderDTO.getUserId());
@@ -97,6 +100,7 @@ public class OrderServiceImpl implements OrderService{
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateOrderStatusGetDefaultUser")
+    @Transactional
     @Override
     public OrderResponseDTO updateOrderStatus(Long orderId, String status) {
         Order savedOrder = updateStatusAndSave(orderId, status);
@@ -116,6 +120,7 @@ public class OrderServiceImpl implements OrderService{
         return orderRepository.save(order);
     }
 
+    @Transactional
     @Override
     public String deleteOrder(Long orderId) {
         Order order = findOrderOrThrow(orderId);

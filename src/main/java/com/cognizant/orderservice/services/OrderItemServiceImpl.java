@@ -15,6 +15,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 //import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import java.util.function.Function;
 
 @Service
 @Slf4j
+@Transactional(readOnly = true)
 public class OrderItemServiceImpl implements OrderItemService{
     @Autowired
     private OrderItemRepository orderItemRepository;
@@ -41,6 +43,7 @@ public class OrderItemServiceImpl implements OrderItemService{
 //    }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "addItemGetDefaultProduct")
+    @Transactional
     @Override
     public OrderItemResponseDTO addItem(OrderItemDTO orderItemDTO) {
         findOrderOrThrow(orderItemDTO.getOrderId());
@@ -116,6 +119,7 @@ public class OrderItemServiceImpl implements OrderItemService{
     }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateItemGetDefaultProduct")
+    @Transactional
     @Override
     public OrderItemResponseDTO updateItem(Long itemId, OrderItemDTO orderItemDTO) {
         OrderItem savedOrderItem = applyItemUpdateAndSave(itemId, orderItemDTO);
@@ -148,6 +152,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemRepository.save(orderItem);
     }
 
+    @Transactional
     @Override
     public String deleteItem(Long itemId) {
         OrderItem orderItem = findItemOrThrow(itemId);
