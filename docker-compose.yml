@@ -11,9 +11,47 @@ services:
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
       - EUREKA_INSTANCE_PREFERIPADDRESS=true
       - "SPRING_DATASOURCE_URL=jdbc:mysql://order-mysql:3306/OrderServiceDatabase?allowPublicKeyRetrieval=true&useSSL=false"
+      # Config repo sets spring.kafka.consumer.bootstrap-servers=http://localhost:9092.
+      # Override the consumer sub-key so the @KafkaListener reaches the broker container.
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+      - SPRING_KAFKA_CONSUMER_BOOTSTRAP_SERVERS=kafka:9092
     depends_on:
       order-mysql:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+    networks:
+      - microservices-net
+
+  kafka:
+    image: bitnami/kafka:3.7
+    container_name: kafka
+    ports:
+      # Internal listener (kafka:9092) is used by the other containers on the
+      # shared network. This published port exposes an EXTERNAL listener so you
+      # can also reach the broker from the host at localhost:9094 (optional).
+      - "9094:9094"
+    environment:
+      # --- KRaft (no Zookeeper): this single node is both broker and controller ---
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@kafka:9093
+      # --- Listeners ---
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # Allow topic auto-creation on first produce/consume (matches app behaviour)
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    volumes:
+      - kafka-data:/bitnami/kafka
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
     networks:
       - microservices-net
 
@@ -37,6 +75,7 @@ services:
 
 volumes:
   order-mysql-data:
+  kafka-data:
 
 networks:
   microservices-net:

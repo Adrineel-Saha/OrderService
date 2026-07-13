@@ -13,7 +13,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-//import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,11 +36,11 @@ public class OrderItemServiceImpl implements OrderItemService{
     @Autowired
     private Map<Long, ProductDTO> productCache;
 
-//    @KafkaListener(topics = "${app.kafka.productproducer.topic}", groupId = "orderServiceGroup")
-//    public void consumeProductEvent(ProductDTO productDTO) {
-//        productCache.put(productDTO.getId(), productDTO);
-//        log.info("Received and cached ProductDTO from product-events: {}", productDTO);
-//    }
+    @KafkaListener(topics = "${app.kafka.productproducer.topic}", groupId = "orderServiceGroup")
+    public void consumeProductEvent(ProductDTO productDTO) {
+        productCache.put(productDTO.getId(), productDTO);
+        log.info("Received and cached ProductDTO from product-events: {}", productDTO);
+    }
 
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "addItemGetDefaultProduct")
     @Transactional
