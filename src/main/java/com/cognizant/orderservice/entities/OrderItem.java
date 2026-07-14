@@ -20,9 +20,6 @@ public class OrderItem {
     @Column(name="Quantity")
     private int quantity;
 
-    @Column(name="Price")
-    private double price;
-
     @ManyToOne
     @JoinColumn(name="Order_Id",referencedColumnName = "Order_Id")
     private Order order;

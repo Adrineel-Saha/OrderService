@@ -13,7 +13,6 @@ CREATE TABLE Order_Items (
   Order_Item_Id BIGINT NOT NULL AUTO_INCREMENT,
   Product_Id BIGINT NOT NULL,
   Quantity INT NOT NULL,
-  Price DOUBLE NOT NULL,
   Order_Id BIGINT NOT NULL,
   PRIMARY KEY (Order_Item_Id),
 

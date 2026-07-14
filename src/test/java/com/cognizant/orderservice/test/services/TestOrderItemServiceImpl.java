@@ -85,7 +85,6 @@ class TestOrderItemServiceImpl {
         item.setId(id);
         item.setProductId(productId);
         item.setQuantity(2);
-        item.setPrice(499.5);
         item.setOrder(buildOrder(1L));
         return item;
     }
@@ -504,7 +503,6 @@ class TestOrderItemServiceImpl {
         existingItem.setOrder(buildOrder(77L));
         OrderItem savedItem = buildOrderItem(itemId, 11L);
         savedItem.setQuantity(5);
-        savedItem.setPrice(1499.0);
         savedItem.setOrder(order);
         OrderItemResponseDTO responseDTO = buildItemResponseDTO(itemId, 11L);
         responseDTO.setQuantity(5);
