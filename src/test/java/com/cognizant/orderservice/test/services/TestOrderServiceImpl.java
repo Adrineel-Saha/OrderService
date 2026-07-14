@@ -531,6 +531,17 @@ class TestOrderServiceImpl {
     }
 
     @Test
+    void testCreateOrderFallbackWhenUserNotFound() {
+        OrderDTO orderDTO = buildOrderDTO("CREATED");
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.status()).thenReturn(404);
+
+        assertThatThrownBy(() -> orderServiceImpl.createOrderGetDefaultUser(orderDTO, notFound))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("User not found with Id: 1");
+    }
+
+    @Test
     void testGetOrderCircuitBreakerFallback() {
         Order order = buildOrder(1L, "CREATED");
         OrderResponseDTO responseDTO = buildOrderResponseDTO("CREATED");

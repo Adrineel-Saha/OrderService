@@ -791,6 +791,22 @@ class TestOrderItemServiceImpl {
     }
 
     @Test
+    void testAddItemFallbackWhenProductNotFound() {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setProductId(11L);
+        dto.setQuantity(2);
+        dto.setOrderId(77L);
+
+        when(orderRepository.findById(eq(77L))).thenReturn(Optional.of(buildOrder(77L)));
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.status()).thenReturn(404);
+
+        assertThatThrownBy(() -> orderItemServiceImpl.addItemGetDefaultProduct(dto, notFound))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Product not found with Id: 11");
+    }
+
+    @Test
     void testGetItemFallbackSuccess() {
         OrderItem orderItem = buildOrderItem(1L, 1L);
         OrderItemResponseDTO responseDTO = buildItemResponseDTO(1L, 1L);
@@ -848,6 +864,21 @@ class TestOrderItemServiceImpl {
         List<OrderItemResponseDTO> result = orderItemServiceImpl.listItemsByOrderGetDefaultProduct(orderId, new RuntimeException("down"));
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
+    }
+
+    @Test
+    void testUpdateItemFallbackWhenProductNotFound() {
+        OrderItemDTO dto = new OrderItemDTO();
+        dto.setOrderId(77L);
+        dto.setProductId(11L);
+        dto.setQuantity(5);
+
+        FeignException notFound = mock(FeignException.NotFound.class);
+        when(notFound.status()).thenReturn(404);
+
+        assertThatThrownBy(() -> orderItemServiceImpl.updateItemGetDefaultProduct(555L, dto, notFound))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Product not found with Id: 11");
     }
 
     @Test

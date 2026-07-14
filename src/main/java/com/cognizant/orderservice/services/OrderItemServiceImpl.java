@@ -9,6 +9,7 @@ import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.ProductFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
+import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -53,6 +54,9 @@ public class OrderItemServiceImpl implements OrderItemService{
 
     public OrderItemResponseDTO addItemGetDefaultProduct(OrderItemDTO orderItemDTO , Throwable throwable) {
         findOrderOrThrow(orderItemDTO.getOrderId());
+        if (throwable instanceof FeignException feignException && feignException.status() == 404) {
+            throw new ResourceNotFoundException("Product not found with Id: " + orderItemDTO.getProductId());
+        }
         ProductDTO productDTO = productCache.getOrDefault(orderItemDTO.getProductId(), getFallbackProduct(orderItemDTO.getProductId()));
         return saveItemAndBuildResponse(orderItemDTO, productDTO);
     }
@@ -122,12 +126,15 @@ public class OrderItemServiceImpl implements OrderItemService{
     @Transactional
     @Override
     public OrderItemResponseDTO updateItem(Long itemId, OrderItemDTO orderItemDTO) {
+        ProductDTO productDTO = productFeignClient.getProduct(orderItemDTO.getProductId());
         OrderItem savedOrderItem = applyItemUpdateAndSave(itemId, orderItemDTO);
-        ProductDTO productDTO = productFeignClient.getProduct(savedOrderItem.getProductId());
         return toOrderItemResponseWithOrderId(savedOrderItem, productDTO, orderItemDTO.getOrderId());
     }
 
     public OrderItemResponseDTO updateItemGetDefaultProduct(Long itemId, OrderItemDTO orderItemDTO , Throwable throwable) {
+        if (throwable instanceof FeignException feignException && feignException.status() == 404) {
+            throw new ResourceNotFoundException("Product not found with Id: " + orderItemDTO.getProductId());
+        }
         OrderItem savedOrderItem = applyItemUpdateAndSave(itemId, orderItemDTO);
         ProductDTO productDTO = productCache.getOrDefault(savedOrderItem.getProductId(), getFallbackProduct(savedOrderItem.getProductId()));
         return toOrderItemResponseWithOrderId(savedOrderItem, productDTO, orderItemDTO.getOrderId());

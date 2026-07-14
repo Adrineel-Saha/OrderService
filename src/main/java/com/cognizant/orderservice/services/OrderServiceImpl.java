@@ -7,6 +7,7 @@ import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.UserFeignClient;
 import com.cognizant.orderservice.repositories.OrderRepository;
+import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -48,6 +49,9 @@ public class OrderServiceImpl implements OrderService{
     }
 
     public OrderResponseDTO createOrderGetDefaultUser(OrderDTO orderDTO , Throwable throwable) {
+        if (throwable instanceof FeignException feignException && feignException.status() == 404) {
+            throw new ResourceNotFoundException("User not found with Id: " + orderDTO.getUserId());
+        }
         UserDTO userDTO = userCache.getOrDefault(orderDTO.getUserId(), getFallbackUser(orderDTO.getUserId()));
         return saveOrderAndBuildResponse(orderDTO, userDTO);
     }
