@@ -33,6 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TestOrderServiceImpl {
@@ -599,5 +600,16 @@ class TestOrderServiceImpl {
         OrderResponseDTO result = orderServiceImpl.updateOrderStatusGetDefaultUser(orderId, "PAID", feignException);
         assertNotNull(result);
         assertEquals(USER_NAME, result.getUserName());
+    }
+
+    // ── Kafka listener ─────────────────────────────────────────────────────────────
+
+    @Test
+    void testConsumeUserEventCachesUser() {
+        UserDTO userDTO = buildUserDTO();
+
+        orderServiceImpl.consumeUserEvent(userDTO);
+
+        verify(userCache).put(1L, userDTO);
     }
 }
