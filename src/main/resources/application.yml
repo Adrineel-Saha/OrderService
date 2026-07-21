@@ -4,6 +4,8 @@ server:
 spring:
   application:
     name: OrderService
+  config:
+    import: "configserver:"
   cloud:
     config:
       discovery:
