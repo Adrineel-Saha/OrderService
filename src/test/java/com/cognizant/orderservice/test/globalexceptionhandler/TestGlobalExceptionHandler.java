@@ -1,5 +1,6 @@
 package com.cognizant.orderservice.test.globalexceptionhandler;
 
+import com.cognizant.orderservice.exceptions.RateLimitExceededException;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.globalexceptionhandler.GlobalExceptionHandler;
 import feign.FeignException;
@@ -113,5 +114,15 @@ class TestGlobalExceptionHandler {
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals(null, response.getBody());
+    }
+
+    @Test
+    void handleRateLimitExceeded_returns429WithMessage() {
+        RateLimitExceededException ex = new RateLimitExceededException("Too many requests. Please try again later.");
+
+        ResponseEntity<String> response = globalExceptionHandler.handleRateLimitExceeded(ex);
+
+        assertEquals(HttpStatus.TOO_MANY_REQUESTS, response.getStatusCode());
+        assertEquals("Too many requests. Please try again later.", response.getBody());
     }
 }

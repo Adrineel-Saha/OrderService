@@ -3,12 +3,14 @@ package com.cognizant.orderservice.test.services;
 import com.cognizant.orderservice.dtos.*;
 import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.entities.OrderItem;
+import com.cognizant.orderservice.exceptions.RateLimitExceededException;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.ProductFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import com.cognizant.orderservice.services.OrderItemServiceImpl;
 import feign.FeignException;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -919,5 +921,86 @@ class TestOrderItemServiceImpl {
         orderItemServiceImpl.consumeProductEvent(productDTO);
 
         verify(productCache).put(1L, productDTO);
+    }
+
+    // ── Rate limiter fallbacks ──────────────────────────────────────────────────────
+
+    @Test
+    void testAddItemRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+        OrderItemDTO orderItemDTO = new OrderItemDTO();
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.addItemRateLimitFallback(orderItemDTO, ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
+    }
+
+    @Test
+    void testGetItemRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.getItemRateLimitFallback(1L, ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
+    }
+
+    @Test
+    void testListItemsRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.listItemsRateLimitFallback(ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
+    }
+
+    @Test
+    void testListItemsByProductRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.listItemsByProductRateLimitFallback(1L, ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
+    }
+
+    @Test
+    void testListItemsByOrderRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.listItemsByOrderRateLimitFallback(1L, ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
+    }
+
+    @Test
+    void testUpdateItemRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+        OrderItemDTO orderItemDTO = new OrderItemDTO();
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.updateItemRateLimitFallback(1L, orderItemDTO, ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
+    }
+
+    @Test
+    void testDeleteItemRateLimitFallbackThrowsRateLimitExceeded() {
+        RequestNotPermitted ex = mock(RequestNotPermitted.class);
+
+        RateLimitExceededException thrown = assertThrows(
+                RateLimitExceededException.class,
+                () -> orderItemServiceImpl.deleteItemRateLimitFallback(1L, ex));
+
+        assertEquals("Too many requests. Please try again later.", thrown.getMessage());
     }
 }

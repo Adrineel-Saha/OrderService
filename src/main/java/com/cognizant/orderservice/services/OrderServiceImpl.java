@@ -4,11 +4,14 @@ import com.cognizant.orderservice.dtos.OrderDTO;
 import com.cognizant.orderservice.dtos.OrderResponseDTO;
 import com.cognizant.orderservice.dtos.UserDTO;
 import com.cognizant.orderservice.entities.Order;
+import com.cognizant.orderservice.exceptions.RateLimitExceededException;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.UserFeignClient;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +43,7 @@ public class OrderServiceImpl implements OrderService{
         log.info("Received and cached UserDTO from user-events: {}", userDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "createOrderRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "createOrderGetDefaultUser")
     @Transactional
     @Override
@@ -63,6 +67,7 @@ public class OrderServiceImpl implements OrderService{
         return toOrderResponseDTO(savedOrder, userDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "getOrderRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "getOrderGetDefaultUser")
     @Override
     public OrderResponseDTO getOrder(Long orderId) {
@@ -77,6 +82,7 @@ public class OrderServiceImpl implements OrderService{
         return toOrderResponseDTO(order, userDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "listOrdersRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listOrdersGetDefaultUser")
     @Override
     public List<OrderResponseDTO> listOrders() {
@@ -89,6 +95,7 @@ public class OrderServiceImpl implements OrderService{
         return toOrderResponseList(orderList, order -> userCache.getOrDefault(order.getUserId(), getFallbackUser(order.getUserId())));
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "listOrdersByUserRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listOrdersByUserGetDefaultUser")
     @Override
     public List<OrderResponseDTO> listOrdersByUser(Long userId) {
@@ -103,6 +110,7 @@ public class OrderServiceImpl implements OrderService{
         return toOrderResponseList(orderList, order -> userDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "updateOrderStatusRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateOrderStatusGetDefaultUser")
     @Transactional
     @Override
@@ -124,6 +132,7 @@ public class OrderServiceImpl implements OrderService{
         return orderRepository.save(order);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "deleteOrderRateLimitFallback")
     @Transactional
     @Override
     public String deleteOrder(Long orderId) {
@@ -165,5 +174,39 @@ public class OrderServiceImpl implements OrderService{
         userDTO.setUserName("Unknown");
         userDTO.setEmail("unknown@example.com");
         return userDTO;
+    }
+
+    // ---- Rate limiter fallbacks ----
+    // Signature rule: same params as the original method + RequestNotPermitted as the last argument.
+    // The rate limiter aspect is configured to run OUTSIDE the circuit breaker (see rate-limiter-aspect-order),
+    // so a rejection surfaces as a 429 instead of being swallowed by the circuit breaker fallback.
+
+    public OrderResponseDTO createOrderRateLimitFallback(OrderDTO orderDTO, RequestNotPermitted ex) {
+        throw rateLimitExceeded("createOrder", ex);
+    }
+
+    public OrderResponseDTO getOrderRateLimitFallback(Long orderId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("getOrder", ex);
+    }
+
+    public List<OrderResponseDTO> listOrdersRateLimitFallback(RequestNotPermitted ex) {
+        throw rateLimitExceeded("listOrders", ex);
+    }
+
+    public List<OrderResponseDTO> listOrdersByUserRateLimitFallback(Long userId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("listOrdersByUser", ex);
+    }
+
+    public OrderResponseDTO updateOrderStatusRateLimitFallback(Long orderId, String status, RequestNotPermitted ex) {
+        throw rateLimitExceeded("updateOrderStatus", ex);
+    }
+
+    public String deleteOrderRateLimitFallback(Long orderId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("deleteOrder", ex);
+    }
+
+    private RateLimitExceededException rateLimitExceeded(String operation, RequestNotPermitted ex) {
+        log.warn("Rate limit exceeded for {}: {}", operation, ex.getMessage());
+        return new RateLimitExceededException("Too many requests. Please try again later.");
     }
 }

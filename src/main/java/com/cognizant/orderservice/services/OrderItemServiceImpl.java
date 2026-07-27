@@ -5,12 +5,15 @@ import com.cognizant.orderservice.dtos.OrderItemResponseDTO;
 import com.cognizant.orderservice.dtos.ProductDTO;
 import com.cognizant.orderservice.entities.Order;
 import com.cognizant.orderservice.entities.OrderItem;
+import com.cognizant.orderservice.exceptions.RateLimitExceededException;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import com.cognizant.orderservice.feignclients.ProductFeignClient;
 import com.cognizant.orderservice.repositories.OrderItemRepository;
 import com.cognizant.orderservice.repositories.OrderRepository;
 import feign.FeignException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.ratelimiter.RequestNotPermitted;
+import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +46,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         log.info("Received and cached ProductDTO from product-events: {}", productDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "addItemRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "addItemGetDefaultProduct")
     @Transactional
     @Override
@@ -70,6 +74,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemResponseDTO;
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "getItemRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "getItemGetDefaultProduct")
     @Override
     public OrderItemResponseDTO getItem(Long itemId) {
@@ -84,6 +89,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return toOrderItemResponseWithOrderId(orderItem, productDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "listItemsRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItems() {
@@ -96,6 +102,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return toOrderItemResponseList(orderItemList, item -> productCache.getOrDefault(item.getProductId(), getFallbackProduct(item.getProductId())));
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "listItemsByProductRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsByProductGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByProduct(Long productId) {
@@ -110,6 +117,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return toOrderItemResponseList(orderItemList, item -> productDTO);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "listItemsByOrderRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "listItemsByOrderGetDefaultProduct")
     @Override
     public List<OrderItemResponseDTO> listItemsByOrder(Long orderId) {
@@ -122,6 +130,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return toOrderItemResponseList(orderItemList, item -> productCache.getOrDefault(item.getProductId(), getFallbackProduct(item.getProductId())), orderId);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "updateItemRateLimitFallback")
     @CircuitBreaker(name = "OrderMicroservice", fallbackMethod = "updateItemGetDefaultProduct")
     @Transactional
     @Override
@@ -159,6 +168,7 @@ public class OrderItemServiceImpl implements OrderItemService{
         return orderItemRepository.save(orderItem);
     }
 
+    @RateLimiter(name = "OrderServiceRateLimiter", fallbackMethod = "deleteItemRateLimitFallback")
     @Transactional
     @Override
     public String deleteItem(Long itemId) {
@@ -230,5 +240,43 @@ public class OrderItemServiceImpl implements OrderItemService{
         productDTO.setPrice(0.0);
         productDTO.setStock(0);
         return productDTO;
+    }
+
+    // ---- Rate limiter fallbacks ----
+    // Signature rule: same params as the original method + RequestNotPermitted as the last argument.
+    // The rate limiter aspect runs OUTSIDE the circuit breaker (see rate-limiter-aspect-order),
+    // so a rejection surfaces as a 429 instead of being swallowed by the circuit breaker fallback.
+
+    public OrderItemResponseDTO addItemRateLimitFallback(OrderItemDTO orderItemDTO, RequestNotPermitted ex) {
+        throw rateLimitExceeded("addItem", ex);
+    }
+
+    public OrderItemResponseDTO getItemRateLimitFallback(Long itemId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("getItem", ex);
+    }
+
+    public List<OrderItemResponseDTO> listItemsRateLimitFallback(RequestNotPermitted ex) {
+        throw rateLimitExceeded("listItems", ex);
+    }
+
+    public List<OrderItemResponseDTO> listItemsByProductRateLimitFallback(Long productId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("listItemsByProduct", ex);
+    }
+
+    public List<OrderItemResponseDTO> listItemsByOrderRateLimitFallback(Long orderId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("listItemsByOrder", ex);
+    }
+
+    public OrderItemResponseDTO updateItemRateLimitFallback(Long itemId, OrderItemDTO orderItemDTO, RequestNotPermitted ex) {
+        throw rateLimitExceeded("updateItem", ex);
+    }
+
+    public String deleteItemRateLimitFallback(Long itemId, RequestNotPermitted ex) {
+        throw rateLimitExceeded("deleteItem", ex);
+    }
+
+    private RateLimitExceededException rateLimitExceeded(String operation, RequestNotPermitted ex) {
+        log.warn("Rate limit exceeded for {}: {}", operation, ex.getMessage());
+        return new RateLimitExceededException("Too many requests. Please try again later.");
     }
 }

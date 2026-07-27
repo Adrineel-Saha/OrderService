@@ -1,7 +1,9 @@
 package com.cognizant.orderservice.globalexceptionhandler;
 
+import com.cognizant.orderservice.exceptions.RateLimitExceededException;
 import com.cognizant.orderservice.exceptions.ResourceNotFoundException;
 import feign.FeignException;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -39,6 +41,12 @@ public class GlobalExceptionHandler {
         String cleanMessage = msg.substring(lastBracket + 1, endBracket);
 
         return new ResponseEntity<>(cleanMessage, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = RateLimitExceededException.class)
+    public ResponseEntity<String> handleRateLimitExceeded(RateLimitExceededException ex) {
+        ResponseEntity<String> errorResponse = new ResponseEntity<String>(ex.getMessage(), HttpStatus.TOO_MANY_REQUESTS);
+        return errorResponse;
     }
 
     @ExceptionHandler(value = Exception.class)
