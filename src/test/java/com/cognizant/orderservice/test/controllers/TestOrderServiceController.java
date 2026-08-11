@@ -5,7 +5,6 @@ import com.cognizant.orderservice.dtos.OrderDTO;
 import com.cognizant.orderservice.dtos.OrderItemDTO;
 import com.cognizant.orderservice.dtos.OrderItemResponseDTO;
 import com.cognizant.orderservice.dtos.OrderResponseDTO;
-import com.cognizant.orderservice.main.OrderServiceApplication;
 import com.cognizant.orderservice.services.OrderItemService;
 import com.cognizant.orderservice.services.OrderService;
 import org.junit.jupiter.api.AfterEach;
@@ -14,10 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 
 import java.time.LocalDateTime;
@@ -29,8 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest(classes = OrderServiceApplication.class)
-@ActiveProfiles("test")
 class TestOrderServiceController {
 
     @Mock
@@ -40,7 +34,6 @@ class TestOrderServiceController {
     @InjectMocks
     private OrderServiceController orderServiceController;
 
-    @Autowired
     private LocalValidatorFactoryBean validator;
 
     private static final String USER_NAME = "Aman";
@@ -54,6 +47,8 @@ class TestOrderServiceController {
     @BeforeEach
     void setUp() {
         mocks = MockitoAnnotations.openMocks(this);
+        validator = new LocalValidatorFactoryBean();
+        validator.afterPropertiesSet();
     }
 
     @AfterEach
